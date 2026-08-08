@@ -4,26 +4,28 @@
 
 ---
 
-## The problem (a true story)
+## The problem
 
-Shash, a product lead, is deep in a Claude session working through TPU procurement.
-Past a certain point he needs Teja from IT. Today that looks like this:
+Every team — software, hardware, marketing, sales — now works with AI. But each person's
+session is a **silo**: their context, their prompts, their conversation. The moment a task
+crosses a team boundary, the AI leverage collapses into a game of telephone.
+
+A software engineer is deep in a Claude session, debugging why an inference kernel
+underperforms on the new accelerator board. Claude has all the code context. Past a certain
+point, the answer lives with the hardware team — in another office, in another time zone.
+Today that looks like this:
 
 ```mermaid
 sequenceDiagram
-    participant T as Teja (the expert)
-    participant S as Shash (the host)
+    participant HW as Hardware architect (the expert)
+    participant SW as Software engineer (the host)
     participant C as Claude
-    T->>S: asks a question over chat
-    S->>C: retypes it into his session
-    C->>S: answers
-    S->>T: paraphrases the answer back
-    Note over T,C: Every hop loses context.<br/>Repeat × 10 for one decision.
+    HW->>SW: asks a question over chat
+    SW->>C: retypes it into the session
+    C->>SW: answers
+    SW->>HW: paraphrases the answer back
+    Note over HW,C: Every hop loses context.<br/>Repeat × 10 for one decision.
 ```
-
-Every team — software, hardware, marketing, sales — has this problem. Everyone uses AI,
-but each person's session is a **silo**. Expertise can't step into the room where the work
-is actually happening.
 
 ## The idea
 
@@ -33,27 +35,29 @@ transcript, direct line to Claude, every message attributed by name.
 
 ```mermaid
 sequenceDiagram
-    participant S as Shash (host)
+    participant A as Ava — software engineer (host)
     participant TT as TagTeam server
     participant C as Claude
-    participant T as Teja (guest)
-    S->>TT: works with Claude in a session
-    S->>TT: "Tag in" → invite link (30-min, single-use token)
-    S-->>T: sends the link
-    T->>TT: opens link, joins the live session
-    Note over T: sees the full transcript instantly
-    T->>C: asks Claude directly, as himself
-    C-->>S: streamed answer, addressed to Teja by name
-    C-->>T: (both see everything, live)
-    S->>TT: revoke guest when done
+    participant S as Sam — senior hardware architect (guest)
+    A->>TT: works with Claude on the kernel bug
+    A->>TT: "Tag in" → invite link (30-min, single-use token)
+    A-->>S: sends the link across time zones
+    S->>TT: opens link, joins the live session
+    Note over S: sees the full transcript instantly
+    S->>C: asks Claude directly, as himself
+    C-->>A: streamed answer, addressed to Sam by name
+    C-->>S: (both see everything, live)
+    A->>TT: revoke guest when done
 ```
 
 ## Why it matters
 
-- **Zero-hop expertise.** The person who knows the answer talks to the AI that has the
-  context. Decisions that took an afternoon of relaying take minutes.
-- **Knowledge moves sideways.** A junior can be tagged into a senior's session and watch
-  how the problem actually gets worked — the session becomes the classroom.
+- **Zero-hop expertise across team boundaries.** The hardware expert talks to the AI that
+  holds the software context — and vice versa. Decisions that took an afternoon of relaying
+  take minutes, across offices and time zones.
+- **Knowledge moves sideways — and downward.** The session has room for a third seat: a
+  junior engineer (Kai) can be tagged in to *shadow* — watching how the senior architect
+  actually works the problem. The session becomes the classroom.
 - **It meets people where they already are.** No new tool to learn: it's the same AI
   conversation, just with the right people in it.
 
@@ -94,9 +98,9 @@ Agent SDK → API key → a clearly-labeled mock mode, so the demo runs with zer
 | --- | --- |
 | Single-use invite tokens, 30-min TTL | Real identity / SSO |
 | Max 2 guests per session | Context scoping & redaction (what a guest may see) |
-| Host can revoke a guest instantly | Teams integration — tag in from where you already chat |
+| Host can revoke a guest instantly | Chat-platform integration — tag in from where you already work |
 | Guests cannot mint invites | Attach to local Claude Code CLI sessions |
-| API key never leaves the server | Expertise personas: summon "Agent Teja" when the human is asleep |
+| API key never leaves the server | Expertise personas: summon the expert's agent when the human is asleep |
 
 ## The meta-story: built by the thing it demonstrates
 
@@ -108,4 +112,4 @@ and the process.
 
 ---
 
-*Hackathon POC by Shash Bhaskar. See `README.md` to run it and `DEMO.md` for the 3-minute demo script.*
+*Hackathon POC. See `README.md` to run it and `DEMO.md` for the 3-minute demo script.*

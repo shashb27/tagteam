@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TagTeam</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/web/style.css">
+</head>
+<body data-screen="gate">
+
+  <!-- Screen 1: name gate (host + guest variants, toggled by JS) -->
+  <main id="gate" class="gate">
+    <h1 class="logo">Tag<span class="logo-accent">Team</span></h1>
+    <p id="gate-title" class="gate-title">Start a shared Claude session</p>
+    <p id="gate-sub" class="gate-sub">Stop playing telephone with your AI.</p>
+    <form id="gate-form" class="gate-form">
+      <input id="name-input" type="text" maxlength="40" autocomplete="off"
+             placeholder="Your display name" spellcheck="false">
+      <button id="gate-btn" type="submit">Start session</button>
+    </form>
+    <p id="gate-error" class="gate-error hidden"></p>
+    <p id="gate-note" class="gate-note hidden">
+      Invite links are single-use and expire. If this one fails, ask the host to tag you in again.
+    </p>
+    <p id="gate-wait" class="gate-note hidden">Reconnecting to your session&hellip;</p>
+  </main>
+
+  <!-- Screen 2: chat -->
+  <div id="chat" class="chat hidden">
+    <header class="topbar">
+      <span class="logo-sm">Tag<span class="logo-accent">Team</span></span>
+      <span id="session-label" class="session-label"></span>
+      <span class="conn">
+        <span id="conn-dot" class="conn-dot"></span>
+        <span id="conn-text" class="conn-text">Live</span>
+      </span>
+      <span class="topbar-spacer"></span>
+      <button id="tagin-btn" class="btn-primary" type="button">Tag in a colleague</button>
+    </header>
+
+    <div class="chat-body">
+      <div class="transcript-wrap">
+        <section id="transcript" class="transcript" aria-live="polite"></section>
+        <button id="jump-latest" class="jump-latest hidden" type="button">&darr; New messages</button>
+      </div>
+      <aside id="sidebar" class="sidebar">
+        <h2 class="sidebar-h">In the room</h2>
+        <ul id="participants" class="participants"></ul>
+      </aside>
+    </div>
+
+    <div id="banner" class="banner hidden"></div>
+
+    <form id="composer" class="composer">
+      <textarea id="composer-input" rows="1" maxlength="8000"
+                placeholder="Message Claude &mdash; everyone in the session sees this."></textarea>
+      <button id="send-btn" type="submit">Send</button>
+    </form>
+  </div>
+
+  <!-- Screen 3: fatal / kicked / ended -->
+  <main id="fatal" class="gate hidden">
+    <h1 class="logo">Tag<span class="logo-accent">Team</span></h1>
+    <p id="fatal-title" class="gate-title"></p>
+    <p id="fatal-msg" class="gate-sub"></p>
+    <a href="/" id="fatal-home" class="fatal-home">Start your own session</a>
+  </main>
+
+  <!-- Invite modal (host only) -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <h3 id="modal-title">Tag in a colleague</h3>
+      <p class="modal-body">They&rsquo;ll join this live conversation &mdash; full transcript,
+        direct line to Claude. Link is single-use and expires in 30 minutes.</p>
+      <div class="invite-row">
+        <input id="invite-url" readonly spellcheck="false">
+        <button id="copy-btn" type="button">Copy link</button>
+      </div>
+      <p class="invite-meta">Single use &middot; expires in <span id="invite-ttl">30:00</span></p>
+      <p class="modal-foot">Guests can&rsquo;t invite others. You can revoke access anytime from the roster.<br>
+        v1: deliver invites via Teams &mdash; not in this POC.</p>
+      <button id="modal-close" class="modal-close" type="button" aria-label="Close">&times;</button>
+    </div>
+  </div>
+
+  <div id="toasts" class="toasts"></div>
+
+  <script type="module" src="/web/app.js"></script>
+</body>
+</html>

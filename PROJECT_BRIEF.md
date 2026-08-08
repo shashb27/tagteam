@@ -1,15 +1,21 @@
 # TagTeam — Project Brief (Hackathon POC)
 
-## The problem (real example from OXMIQ)
+## The problem (cross-team, software × hardware)
 
-Shash (Product Lead) is working through a TPU procurement task with Claude in a live session.
-Past a certain point he needs Teja (IT) — but Teja isn't in the session. So Teja asks Shash
-questions over chat, Shash relays them to Claude, Claude answers Shash, Shash relays back to
-Teja. Every hop loses context and time. The expert should be able to **jump into the live
-AI session** and talk to Claude (and the host) directly.
+A software engineer is deep in a Claude session debugging why an inference kernel
+underperforms on a new accelerator board. Past a certain point the answer lives with the
+hardware team — a senior architect in another office and time zone. Today the expert asks
+questions over chat, the engineer relays them to Claude, Claude answers, and the engineer
+paraphrases back. Every hop loses context and time. The expert should be able to **jump
+into the live AI session** and talk to Claude (and the host) directly — and a junior
+engineer should be able to shadow the session and learn from how the seniors work.
 
 Generalized: every team (software, hardware, marketing, sales) uses AI in a silo. Workflows,
 prompts, and live working context don't move sideways between people.
+
+**Use only fictional names in all demo material and mock content — never real employee
+names.** Standard demo cast: Ava (software engineer, host), Sam (senior hardware architect,
+tagged-in expert), Kai (junior engineer, shadowing).
 
 ## The product
 
@@ -49,11 +55,11 @@ session dashboards, persona/expertise agents.
 
 ## Success criteria (the demo, in order)
 
-1. Two browser windows side by side. Host chats with Claude about a real task (use the TPU
-   procurement scenario).
-2. Host clicks **Tag in** → copies the invite link → guest window opens it, types "Teja",
+1. Two browser windows side by side. Host (Ava, software) chats with Claude about a real
+   task (the kernel-on-accelerator debugging scenario).
+2. Host clicks **Tag in** → copies the invite link → guest window opens it, types "Sam",
    and is in — full transcript visible.
-3. Guest asks Claude a question directly; Claude answers, addressing Teja by name; host sees
+3. Guest asks Claude a question directly; Claude answers, addressing Sam by name; host sees
    everything live.
 4. Host revokes the guest; guest can no longer send.
 5. Total setup for a fresh machine: `npm install && npm start`, open the printed URL.
