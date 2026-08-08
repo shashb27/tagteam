@@ -73,7 +73,7 @@ contract in the absence of the architect's doc. Field names below are exact.
 | type | payload | client behavior |
 | --- | --- | --- |
 | `session_state` | `{ sessionId, selfId, participants: Participant[], messages: Message[] }` | sent once after successful create/join; client renders full transcript and enters CHAT state |
-| `participant_joined` | `{ participant: Participant }` | add to panel, append system line "Teja joined" |
+| `participant_joined` | `{ participant: Participant }` | add to panel, append system line "Sam joined" |
 | `participant_left` | `{ participantId }` | mark offline in panel, system line "… left" |
 | `participant_updated` | `{ participant: Participant }` | e.g. `canWrite` flipped; re-render panel; if it is self, apply read-only state (section 8) |
 | `participant_removed` | `{ participantId }` | remove from panel, system line; if self → kicked overlay (section 8) |
@@ -199,7 +199,7 @@ Each transcript entry is one of:
 <!-- human or assistant message -->
 <article class="msg msg-human|msg-assistant" data-mid="<messageId>" style="--author-hue: 210">
   <div class="msg-meta">
-    <span class="msg-author">Shash</span>
+    <span class="msg-author">Ava</span>
     <span class="msg-role">host</span>      <!-- host | guest | Claude -->
     <span class="msg-time">14:32</span>
   </div>
@@ -207,7 +207,7 @@ Each transcript entry is one of:
 </article>
 
 <!-- system line -->
-<div class="sysline">Teja joined the session</div>
+<div class="sysline">Sam joined the session</div>
 ```
 
 ### 5.2 Attribution
@@ -303,7 +303,7 @@ Each `#participants` entry:
 ```html
 <li class="pt" data-pid="…" style="--author-hue: 210">
   <span class="pt-dot"></span>            <!-- filled = online, hollow = offline -->
-  <span class="pt-name">Teja</span>
+  <span class="pt-name">Sam</span>
   <span class="pt-badge">guest</span>     <!-- host | guest | read-only -->
   <span class="pt-actions">               <!-- host viewing a guest only -->
     <button class="pt-ro" title="Toggle read-only">👁</button>
@@ -321,7 +321,7 @@ rendered by the client — it is not in `participants[]`.
   one-way, the button hides after use. Read-only guests show the `read-only`
   badge (replaces `guest`).
 - `✕` sends `revoke_guest {participantId, mode:"kick"}` after a
-  `confirm("Remove Teja from the session?")`. Server broadcasts
+  `confirm("Remove Sam from the session?")`. Server broadcasts
   `participant_removed` and closes the guest's socket.
 - No confirmation for read-only (reversible), confirm for kick (terminal).
 

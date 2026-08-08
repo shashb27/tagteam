@@ -180,7 +180,7 @@ const inviteIndex = new Map();
 // ---- Participant ----
 {
   id: "p-uuid",
-  name: "Teja",                   // display name, trimmed, 1..40 chars, control chars stripped
+  name: "Sam",                   // display name, trimmed, 1..40 chars, control chars stripped
   role: "host" | "guest",
   canSend: true,                  // flipped by revoke_guest mode "read_only" / "restore"
   status: "active" | "kicked",
@@ -208,8 +208,8 @@ const inviteIndex = new Map();
   // assistant: authorId = "claude", authorName = "Claude"
   // system:    authorId = "system", authorName = "System"  (join/leave/revoke notices)
   authorId: "p-uuid",
-  authorName: "Shash",
-  text: "What TPU SKUs did we shortlist?",
+  authorName: "Ava",
+  text: "Which kernels regressed on the new board?",
   ts: 1754650060000,
   streaming: false,               // true only on the in-progress assistant message
   toolEvents: [],                 // assistant only: [{tool, summary, ok, ts}], for snapshot replay
@@ -233,8 +233,8 @@ Rules:
 - **`transcript` is append-only.** The streaming assistant message is appended at run start with
   `text: ""` and `streaming: true`, then mutated in place (text grows, `toolEvents` appended,
   `streaming` flipped to false at completion). This makes late-join snapshots trivially correct.
-- **System messages** are real transcript entries (e.g. `"Teja joined the session."`,
-  `"Teja was made read-only by the host."`) so both humans and late joiners see them. They are
+- **System messages** are real transcript entries (e.g. `"Sam joined the session."`,
+  `"Sam was made read-only by the host."`) so both humans and late joiners see them. They are
   *not* sent to Claude as transcript turns — Claude learns roster changes via §8.5.
 - All limits: user message text ≤ 8,000 chars (`MESSAGE_TOO_LONG`), `pendingUserMessages` cap 10
   (`RATE_LIMITED`), max 25 sessions alive (`POST /api/sessions` → `503`).
@@ -262,11 +262,11 @@ Rules:
 
 Host (fresh):
 ```json
-{"type": "join", "v": 1, "as": "host", "sessionId": "6f9c1e2a-…", "hostKey": "b1d4…", "name": "Shash"}
+{"type": "join", "v": 1, "as": "host", "sessionId": "6f9c1e2a-…", "hostKey": "b1d4…", "name": "Ava"}
 ```
 Guest (invite):
 ```json
-{"type": "join", "v": 1, "as": "guest", "inviteToken": "i-uuid", "name": "Teja"}
+{"type": "join", "v": 1, "as": "guest", "inviteToken": "i-uuid", "name": "Sam"}
 ```
 Resume (either role, after refresh/drop):
 ```json
@@ -325,19 +325,19 @@ system Message.
 ```json
 {
   "type": "joined", "v": 1,
-  "self": {"participantId": "p-uuid", "resumeKey": "r-uuid", "role": "guest", "name": "Teja", "canSend": true},
+  "self": {"participantId": "p-uuid", "resumeKey": "r-uuid", "role": "guest", "name": "Sam", "canSend": true},
   "session": {
     "id": "6f9c1e2a-…",
     "participants": [
-      {"id": "p-host", "name": "Shash", "role": "host", "canSend": true, "connected": true, "status": "active"},
-      {"id": "p-uuid", "name": "Teja", "role": "guest", "canSend": true, "connected": true, "status": "active"}
+      {"id": "p-host", "name": "Ava", "role": "host", "canSend": true, "connected": true, "status": "active"},
+      {"id": "p-uuid", "name": "Sam", "role": "guest", "canSend": true, "connected": true, "status": "active"}
     ],
     "transcript": [
-      {"id": "m-1", "seq": 1, "role": "user", "authorId": "p-host", "authorName": "Shash",
-       "text": "Help me compare TPU procurement options.", "ts": 1754650060000, "streaming": false, "toolEvents": []},
+      {"id": "m-1", "seq": 1, "role": "user", "authorId": "p-host", "authorName": "Ava",
+       "text": "Help me debug the kernel regression on the new board.", "ts": 1754650060000, "streaming": false, "toolEvents": []},
       {"id": "m-2", "seq": 2, "role": "assistant", "authorId": "claude", "authorName": "Claude",
-       "text": "Sure, Shash. Based on…", "ts": 1754650061000, "streaming": true,
-       "toolEvents": [{"tool": "Read", "summary": "Read demo-workspace/tpu-quotes.md", "ok": true, "ts": 1754650061500}]}
+       "text": "Sure, Ava. Based on…", "ts": 1754650061000, "streaming": true,
+       "toolEvents": [{"tool": "Read", "summary": "Read demo-workspace/kernel-profile.md", "ok": true, "ts": 1754650061500}]}
     ]
   }
 }
@@ -362,9 +362,9 @@ flushes).
 #### `participant_joined` — broadcast (all sockets except the joiner's, which got `joined`)
 ```json
 {"type": "participant_joined", "v": 1,
- "participant": {"id": "p-uuid", "name": "Teja", "role": "guest", "canSend": true, "connected": true, "status": "active"},
+ "participant": {"id": "p-uuid", "name": "Sam", "role": "guest", "canSend": true, "connected": true, "status": "active"},
  "systemMessage": {"id": "m-9", "seq": 9, "role": "system", "authorId": "system", "authorName": "System",
-                    "text": "Teja joined the session.", "ts": 1754650070000, "streaming": false, "toolEvents": []}}
+                    "text": "Sam joined the session.", "ts": 1754650070000, "streaming": false, "toolEvents": []}}
 ```
 (Every frame that appends a system Message carries it inline as `systemMessage`, so clients never
 need to re-fetch the transcript.)
@@ -372,7 +372,7 @@ need to re-fetch the transcript.)
 #### `participant_left` — broadcast, all sockets (including the kicked guest, pre-close)
 ```json
 {"type": "participant_left", "v": 1, "participantId": "p-uuid", "reason": "kicked",
- "systemMessage": { "id": "m-12", "seq": 12, "role": "system", "authorId": "system", "authorName": "System", "text": "Teja was removed by the host.", "ts": 1754650300000, "streaming": false, "toolEvents": [] }}
+ "systemMessage": { "id": "m-12", "seq": 12, "role": "system", "authorId": "system", "authorName": "System", "text": "Sam was removed by the host.", "ts": 1754650300000, "streaming": false, "toolEvents": [] }}
 ```
 `reason`: `"kicked"` | `"disconnected"` (all sockets gone — participant stays in the roster with
 `connected:false`; only `kicked` removes send rights permanently). For `disconnected`, send
@@ -383,7 +383,7 @@ need to re-fetch the transcript.)
 ```json
 {"type": "participant_updated", "v": 1, "participantId": "p-uuid",
  "patch": {"canSend": false},
- "systemMessage": {"id": "m-11", "seq": 11, "role": "system", "authorId": "system", "authorName": "System", "text": "Teja was made read-only by the host.", "ts": 1754650200000, "streaming": false, "toolEvents": []}}
+ "systemMessage": {"id": "m-11", "seq": 11, "role": "system", "authorId": "system", "authorName": "System", "text": "Sam was made read-only by the host.", "ts": 1754650200000, "streaming": false, "toolEvents": []}}
 ```
 `patch` contains only changed public fields (`canSend`, `connected`). `systemMessage` is omitted
 for pure connectivity changes (connect/disconnect) — those don't clutter the transcript.
@@ -393,7 +393,7 @@ The affected guest also receives this frame and must disable its composer when
 #### `user_message` — broadcast (server-authoritative echo)
 ```json
 {"type": "user_message", "v": 1, "clientMsgId": "c-123",
- "message": {"id": "m-10", "seq": 10, "role": "user", "authorId": "p-uuid", "authorName": "Teja",
+ "message": {"id": "m-10", "seq": 10, "role": "user", "authorId": "p-uuid", "authorName": "Sam",
               "text": "Do we already have a firewall exception for the vendor portal?", "ts": 1754650100000, "streaming": false, "toolEvents": []}}
 ```
 `clientMsgId` is echoed to all (only the sender cares). Non-senders just append.
@@ -410,7 +410,7 @@ previous run — §7). Frontend may ignore it or use it for a subtle "answering 
 
 #### `assistant_delta` — broadcast, streaming text
 ```json
-{"type": "assistant_delta", "v": 1, "messageId": "m-13", "index": 4, "delta": "Based on the quotes in tpu-quotes.md, the three viable"}
+{"type": "assistant_delta", "v": 1, "messageId": "m-13", "index": 4, "delta": "Based on the quotes in kernel-profile.md, the three viable"}
 ```
 `index` starts at 0 per message and increments by 1 per frame (coalescing in §9 means one frame ≠
 one model token). Client appends `delta` to the message text. If the client ever sees a gap in
@@ -419,19 +419,19 @@ gaps cannot happen on a healthy socket because WS is ordered.
 
 #### `tool_activity` — broadcast, agent is using a tool
 ```json
-{"type": "tool_activity", "v": 1, "messageId": "m-13", "phase": "start", "tool": "Read", "summary": "Read demo-workspace/tpu-quotes.md"}
+{"type": "tool_activity", "v": 1, "messageId": "m-13", "phase": "start", "tool": "Read", "summary": "Read demo-workspace/kernel-profile.md"}
 ```
 ```json
-{"type": "tool_activity", "v": 1, "messageId": "m-13", "phase": "end", "tool": "Read", "summary": "Read demo-workspace/tpu-quotes.md", "ok": true}
+{"type": "tool_activity", "v": 1, "messageId": "m-13", "phase": "end", "tool": "Read", "summary": "Read demo-workspace/kernel-profile.md", "ok": true}
 ```
-Rendered as a small inline chip in the assistant bubble ("🔧 Read: demo-workspace/tpu-quotes.md").
+Rendered as a small inline chip in the assistant bubble ("🔧 Read: demo-workspace/kernel-profile.md").
 Only `phase:"end"` events are persisted into `toolEvents` for snapshots. In the Messages-API
 fallback (no tools), this frame simply never occurs — the frontend must not depend on it.
 
 #### `assistant_complete` — broadcast, turn finished
 ```json
 {"type": "assistant_complete", "v": 1, "messageId": "m-13",
- "text": "Based on the quotes in tpu-quotes.md, the three viable options are…",
+ "text": "Based on the quotes in kernel-profile.md, the three viable options are…",
  "stopReason": "end_turn"}
 ```
 `text` is the **full final text** — the client MUST replace its accumulated text with this
@@ -505,7 +505,7 @@ startRun(session):
 ```
 
 - Batching multiple queued messages into one run is intentional: Claude sees
-  `[Shash]: …\n\n[Teja]: …` as one user turn and answers both, addressing each by name.
+  `[Ava]: …\n\n[Sam]: …` as one user turn and answers both, addressing each by name.
 - A run is aborted (`abortController.abort()`) only when the session is GC'd. There is **no**
   user-facing "stop generating" in the POC (deferred; the protocol leaves room — a future
   `abort_run` client frame — do not build it).
@@ -565,8 +565,8 @@ agent.dispose(); // called at session GC; must be safe to call twice
 
 ```js
 { type: "text_delta", text: "chunk of assistant prose" }
-{ type: "tool_start", tool: "Read", summary: "Read demo-workspace/tpu-quotes.md" }
-{ type: "tool_end",   tool: "Read", summary: "Read demo-workspace/tpu-quotes.md", ok: true }
+{ type: "tool_start", tool: "Read", summary: "Read demo-workspace/kernel-profile.md" }
+{ type: "tool_end",   tool: "Read", summary: "Read demo-workspace/kernel-profile.md", ok: true }
 ```
 
 Nothing else crosses this boundary. **The conversation memory strategy is an implementation
@@ -622,8 +622,8 @@ Notes for the builder:
   interactive prompting, which a headless server cannot answer.
 - `dispose()`: nothing to clean per SDK session beyond dropping `sdkSessionId` (SDK sessions are
   files on disk managed by the SDK; leaking them for a weekend POC is fine).
-- Seed `server/demo-workspace/` with 2–3 small fake TPU-procurement files
-  (`tpu-quotes.md`, `vendor-comparison.md`, `it-network-notes.md`) so the demo's tool use has
+- Seed `server/demo-workspace/` with 2–3 small fake kernel-debugging files
+  (`kernel-profile.md`, `board-specs.md`, `hw-constraints.md`) so the demo's tool use has
   something real to read. Contents are the integrator's problem; existence is this doc's contract.
 
 ### 8.4 Messages API fallback (`apiRunner.js`)
@@ -661,10 +661,10 @@ You are Claude inside TagTeam, a shared multiplayer session where several people
 collaborate with you in one live conversation.
 
 People currently in the room:
-- Shash (host)
-- Teja (guest)
+- Ava (host)
+- Sam (guest)
 
-Every human message is prefixed with the speaker's name in brackets, e.g. "[Teja]: ...".
+Every human message is prefixed with the speaker's name in brackets, e.g. "[Sam]: ...".
 Address people by name when you answer, especially when different people asked different
 things. Never invent statements from participants. If a request needs input from a specific
 person in the room, ask them directly by name.
@@ -677,17 +677,17 @@ You may use read-only tools to consult files in your workspace. Never modify any
 **User turn composition** (`composeUserTurn(session, batch)`):
 
 1. If `session.rosterDirty`, prepend roster-change notes accumulated since the last run, then
-   clear the flag: `(Note: Teja joined the session.)` / `(Note: Teja left the session.)` —
+   clear the flag: `(Note: Sam joined the session.)` / `(Note: Sam left the session.)` —
    needed because the SDK `resume` path can't rely on the system prompt alone being re-read,
    and it reads naturally in both impls.
 2. Then each message in the batch as `[<authorName>]: <text>`, separated by blank lines.
 
 ```
-(Note: Teja joined the session.)
+(Note: Sam joined the session.)
 
-[Shash]: Teja, can you check the firewall question?
+[Ava]: Sam, can you check the memory-bandwidth question?
 
-[Teja]: Claude, which ports does the vendor portal need open?
+[Sam]: Claude, does the DMA engine support unaligned reads on this board?
 ```
 
 Claude's replies are stored/streamed verbatim (no name prefix added to assistant text).

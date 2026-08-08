@@ -94,7 +94,7 @@ TranscriptEntry = {
   // kind 'chat':      authorId, authorName, text
   // kind 'assistant': text (final or partial), status: 'streaming'|'done'|'error',
   //                   toolNotes: string[]   (human-readable one-liners, e.g. "Read package.json")
-  // kind 'system':    text (e.g. "Teja joined", "Host revoked Teja")
+  // kind 'system':    text (e.g. "Sam joined", "Host revoked Sam")
   ts: number,
 }
 ```
@@ -184,7 +184,7 @@ Rules enforced here and in `hub.js`:
 2. The connection starts **unauthenticated**. The first message must be `join` within 10 s, else the server closes with code `4001`. No session/participant state exists until join succeeds.
 3. `join` payload: `{ type: 'join', token: string, name: string }`.
    - `redeem(token)` → on failure send `{ type: 'error', code: '<reason>' , fatal: true }` and close (`4003`).
-   - On success: sanitize `name` (trim, strip control chars, clamp 40 chars; empty → `"Anonymous"`), `addParticipant`, bind `ws` to the participant, reply with `joined` (full snapshot), broadcast `participant.joined` + append a `system` transcript entry ("Teja joined").
+   - On success: sanitize `name` (trim, strip control chars, clamp 40 chars; empty → `"Anonymous"`), `addParticipant`, bind `ws` to the participant, reply with `joined` (full snapshot), broadcast `participant.joined` + append a `system` transcript entry ("Sam joined").
 4. Heartbeat: server `ws.ping()` every 30 s; a socket that misses two pongs is `terminate()`d. On `close`: `participant.connected = false`, `ws = null`, broadcast `participant.left`. **Reconnection is not supported in the POC** (tokens are single-use); a dropped guest needs a fresh invite. Called out for DEMO.md.
 5. All frames are JSON text. Non-JSON or frames > 16 KB → `error` (`bad_message`) and, on repeat (3 strikes), close `4002`.
 
@@ -204,7 +204,7 @@ Violations (guest sends `invite.create`, read-only guest sends `chat.send`, unkn
 ### 6.3 Revocation semantics
 
 - `mode: 'readonly'`: set `canWrite = false`; send `revoked { mode: 'readonly' }` to the target; broadcast `participant.updated`. The guest keeps receiving the live transcript but every `chat.send` is rejected with `read_only`.
-- `mode: 'kick'`: set `revoked = true`, `canWrite = false`; send `revoked { mode: 'kick' }`; close the target socket (`4004`); broadcast `participant.left`; append system entry ("Host removed Teja"). A kicked participant's tokens are already spent; they cannot rejoin without a new invite.
+- `mode: 'kick'`: set `revoked = true`, `canWrite = false`; send `revoked { mode: 'kick' }`; close the target socket (`4004`); broadcast `participant.left`; append system entry ("Host removed Sam"). A kicked participant's tokens are already spent; they cannot rejoin without a new invite.
 - Host cannot revoke themselves (reject with `forbidden`).
 - Demo success criterion #4 ("guest can no longer send") is satisfied by either mode; frontend shows both buttons.
 
@@ -261,9 +261,9 @@ pump(session):
 ```
 You are Claude, working inside TagTeam, a shared multiplayer session.
 There are multiple humans in this room. Every human message is prefixed with the
-speaker's name in brackets, e.g. "[Shash]: ...". Currently in the room:
-- Shash (host)
-- Teja (guest)
+speaker's name in brackets, e.g. "[Ava]: ...". Currently in the room:
+- Ava (host)
+- Sam (guest)
 Address people by name when replying to them, and make clear who you are
 answering when messages from several people are pending. Do not invent
 participants. You have read-only tools; never modify files or system state.
@@ -347,10 +347,10 @@ Uses `query()` from `@anthropic-ai/claude-agent-sdk`. Design contract (exact opt
   - **Read-only tool allowlist:** `allowedTools: ['Read', 'Glob', 'Grep', 'WebSearch', 'WebFetch']` and `disallowedTools` for everything write-capable (`Write`, `Edit`, `Bash`, `NotebookEdit`). Belt and suspenders: even if a write tool slips through naming drift, `permissionMode` stays `'default'` (never `bypassPermissions`/`acceptEdits`), so writes would require an approval that nothing grants.
   - **Continuity:** first turn of a session runs fresh; capture the SDK's session id from its init/system message and store as `session.sdkSessionId`; subsequent turns pass `resume: session.sdkSessionId`. This is why the agent engine only needs `newUserText` — the SDK holds its own history. If a resume fails (SDK session evicted), clear `sdkSessionId`, rebuild `prompt` as full transcript text, and run fresh; do this once, not in a loop.
   - `includePartialMessages: true` (or the version's equivalent) so assistant text arrives as stream events for `onDelta`. If the installed version cannot stream partials, degrade: emit one `onDelta(fullText)` per completed assistant message — the wire protocol is unchanged, the UX is just chunkier.
-  - `cwd`: a dedicated scratch directory (`os.tmpdir()/tagteam-<sessionId>`) so `Read`/`Glob` roam somewhere harmless by default; the demo scenario (TPU procurement chat + web search) doesn't rely on local files.
+  - `cwd`: a dedicated scratch directory (`os.tmpdir()/tagteam-<sessionId>`) so `Read`/`Glob` roam somewhere harmless by default; the demo scenario (kernel debugging chat + web search) doesn't rely on local files.
 - **Message mapping** while iterating:
   - assistant text (partial or complete) → `onDelta`
-  - tool-use events → `onTool(\`${toolName} ${primaryInput}\`)` — one short line, e.g. `Read /etc/hosts`, `WebSearch "TPU v5e pricing"`. Truncate input repr to 80 chars.
+  - tool-use events → `onTool(\`${toolName} ${primaryInput}\`)` — one short line, e.g. `Read /etc/hosts`, `WebSearch "accelerator kernel occupancy"`. Truncate input repr to 80 chars.
   - final result message → resolve with accumulated text.
   - error result / iterator throw → reject (→ §7.4).
 

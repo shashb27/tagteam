@@ -38,7 +38,7 @@ Pitch line: *"Stop playing telephone with your AI. Tag your expert in."*
 - **Tag-in:** host clicks a button → gets an invite URL containing a single-use token,
   default TTL 30 minutes.
 - Guest opens the link, sees the live transcript, and can send messages. Every message is
-  attributed (`[Shash]: …`, `[Teja]: …`) and Claude's system prompt tells it who is in the
+  attributed (`[Ava]: …`, `[Sam]: …`) and Claude's system prompt tells it who is in the
   room and to address people by name.
 - **Guardrails v0:** token TTL + single use, max 2 guests per session, host can revoke a
   guest (kick / make read-only), guests cannot mint invites, API key lives server-side only.

@@ -27,9 +27,9 @@ still be delivered.
 
 ## 2. Personas and scenario (fixed for the demo)
 
-- **Host: "Shash"** — Product Lead. Mid-task with Claude on TPU procurement. Needs IT input.
-- **Guest: "Teja"** — IT. Has the answer about firewall/quota constraints. Currently would
-  have to relay through Shash; TagTeam lets him talk to Claude directly.
+- **Host: "Ava"** — Software engineer. Mid-task with Claude debugging kernel perf on the new accelerator. Needs hardware-team input.
+- **Guest: "Sam"** — Senior hardware architect. Has the answer about board timing and memory-bandwidth constraints. Currently would
+  have to relay through Ava; TagTeam lets him talk to Claude directly.
 - **Claude** — the third participant. Knows the roster via system prompt, addresses people
   by name.
 
@@ -63,7 +63,7 @@ that: the host screen always creates a fresh session; a guest token binds to one
 Minimal, centered card:
 
 - Title: **TagTeam** with tagline underneath: *"Stop playing telephone with your AI."*
-- One text input, label **"Your name"**, placeholder `e.g. Shash`, autofocused.
+- One text input, label **"Your name"**, placeholder `e.g. Ava`, autofocused.
 - One primary button: **Start session**. Disabled until name is non-empty (after trim).
 - Pressing Enter in the input = clicking the button.
 - Name rules (same everywhere): trim whitespace; 1–24 chars after trim; strip control
@@ -77,7 +77,7 @@ swap — remember: no framework, plain JS toggling two top-level `<section>`s is
 
 Same centered card layout:
 
-- Title: **Join Shash's TagTeam session** — if the server can resolve the token to a host
+- Title: **Join Ava's TagTeam session** — if the server can resolve the token to a host
   name before join, use it; otherwise fall back to **Join TagTeam session**.
   **ASSUMPTION (protocol):** a cheap pre-join check exists — `GET /api/invite/<token>`
   returning `{ ok, hostName, reason? }` — so the join card can show the host's name and show
@@ -86,7 +86,7 @@ Same centered card layout:
   attempt (same error copy, §7.3).
 - Subtitle: *"You've been tagged in. You'll see the full conversation and can talk to
   Claude directly."*
-- Input **"Your name"**, placeholder `e.g. Teja`, autofocus, same validation as host.
+- Input **"Your name"**, placeholder `e.g. Sam`, autofocus, same validation as host.
 - Primary button: **Join session**.
 - If the URL has no `token` param: render error state E1 (§7.3) immediately, no form.
 
@@ -109,9 +109,9 @@ Layout, desktop-first (the demo is two desktop windows):
 - **Header, left:** wordmark "TagTeam", a green dot + "Live" when the WebSocket is open,
   amber dot + "Reconnecting…" when it drops (§7.5).
 - **Header, middle: roster chips.** One chip per participant, in join order, host first:
-  - Chip = colored dot + name + role tag. Host chip: `Shash · host`. Guest chip:
-    `Teja · guest`. Your own chip appends `(you)`: `Teja · guest (you)`.
-  - A guest made read-only shows `Teja · viewing` with the chip at 60% opacity.
+  - Chip = colored dot + name + role tag. Host chip: `Ava · host`. Guest chip:
+    `Sam · guest`. Your own chip appends `(you)`: `Sam · guest (you)`.
+  - A guest made read-only shows `Sam · viewing` with the chip at 60% opacity.
   - On the **host's screen only**, each guest chip has an overflow affordance (a small `×`
     button and a `👁` toggle, or a tiny menu — builder's choice, but both actions must be
     one click after hover): **Make read-only / Restore send** and **Remove**. See §6.4.
@@ -121,7 +121,7 @@ Layout, desktop-first (the demo is two desktop windows):
 - **Transcript:** vertical list, newest at bottom, auto-scrolls to bottom on new content
   *unless* the user has scrolled up more than ~150px, in which case show a floating
   **"↓ New messages"** pill that jumps to bottom when clicked. This matters for the demo:
-  the host will be reading while Teja's messages stream in.
+  the host will be reading while Sam's messages stream in.
 - **Composer:** single-line-growing textarea (Enter sends, Shift+Enter newline), Send
   button. Placeholder: `Message Claude — everyone in the session sees this.`
   - While Claude is generating: composer stays **enabled** (people can queue thoughts),
@@ -160,7 +160,7 @@ Every transcript entry is one of four kinds. Exact visual spec:
   `assistant_done` (or equivalent) exist and are broadcast to *all* participants so both
   windows stream in sync.
 - **Tool use (Agent SDK read-only tools):** when Claude reads a file or searches, render a
-  collapsed one-line system-style chip inside the Claude message: `🔧 Read file: quotes/tpu-vendors.md`
+  collapsed one-line system-style chip inside the Claude message: `🔧 Read file: profiles/kernel-occupancy.md`
   (click to expand raw tool result is a nice-to-have, not required). **ASSUMPTION:** the
   protocol surfaces tool events as `{ toolName, summary }`; if it doesn't, omit the chip —
   nothing else in this doc depends on it.
@@ -174,8 +174,8 @@ Every transcript entry is one of four kinds. Exact visual spec:
   `[Name]: message text`, and the system prompt (a) lists current participants with roles,
   (b) instructs Claude to address people by name and to note when someone new joins, and
   (c) is refreshed/announced on roster changes (e.g. an injected system-side note
-  `Teja (IT) has joined the session.` so mid-conversation joins are acknowledged). The demo
-  beat "Claude answers, addressing Teja by name" depends on this — flagging it as a hard
+  `Sam (Hardware) has joined the session.` so mid-conversation joins are acknowledged). The demo
+  beat "Claude answers, addressing Sam by name" depends on this — flagging it as a hard
   requirement for the backend builder.
 
 ### 5.5 Participant colors
@@ -190,7 +190,7 @@ header — keep text in default ink color; the color is only for dots/borders/na
 
 ### 6.1 Host: start → chat
 1. Open `/`, type name, **Start session**.
-2. Session screen appears with system row: `Session started by Shash.` Roster: just Shash.
+2. Session screen appears with system row: `Session started by Ava.` Roster: just Ava.
 3. Host types a message, Enter. Message appears instantly (echoed via broadcast, not local
    optimistic-only — **ASSUMPTION:** server broadcasts the sender's own message back;
    client renders on broadcast to keep both windows identical. If latency feels bad,
@@ -218,7 +218,7 @@ This is the demo's money shot. It must feel instant and controlled.
 2. Closing the modal does nothing else. No system row for "invite created" in the shared
    transcript (guests shouldn't see invite mechanics); optionally a host-only muted row
    `You created an invite link (expires 30 min).` — nice-to-have.
-3. When the guest joins, **all** participants see system row: `Teja joined the session.`
+3. When the guest joins, **all** participants see system row: `Sam joined the session.`
    and the roster chip appears with a brief highlight pulse (~1s) so the host's eye is
    drawn to it during the demo.
 
@@ -233,7 +233,7 @@ This is the demo's money shot. It must feel instant and controlled.
    `You're in. Everyone sees your messages, and Claude knows you're here — just start
    typing.` Dismiss on first send or via ×.
 4. Duplicate names: if the joining name (case-insensitive, trimmed) collides with an
-   existing participant, the server (or client on snapshot) displays them as `Teja (2)`.
+   existing participant, the server (or client on snapshot) displays them as `Sam (2)`.
    Purely a display disambiguation; no rejection. **ASSUMPTION:** server owns this rename
    so Claude's `[Name]:` prefix matches the displayed name.
 5. Token becomes used at successful join. Refreshing the guest page after joining would
@@ -244,25 +244,25 @@ Two levels, both from the guest's roster chip on the host screen:
 
 **A. Make read-only** (`👁` toggle)
 - Guest keeps watching; composer disabled per §4.3.
-- System row (everyone): `Shash set Teja to view-only.`
-- Chip label changes to `Teja · viewing`.
-- Reversible: same toggle → **Restore send**, system row `Shash restored Teja's access.`
+- System row (everyone): `Ava set Sam to view-only.`
+- Chip label changes to `Sam · viewing`.
+- Reversible: same toggle → **Restore send**, system row `Ava restored Sam's access.`
 - No confirmation dialog (low stakes, reversible).
 
 **B. Remove** (`×`)
-- One-step confirm inline in the chip/menu: button turns into `Remove Teja?` for 3s; second
+- One-step confirm inline in the chip/menu: button turns into `Remove Sam?` for 3s; second
   click confirms (avoids a heavy modal, still prevents misclicks during a live demo).
 - Guest's socket is closed by the server; guest client swaps to a full-screen terminal
   state: title **You've been removed from the session**, body `The host ended your access.
   Ask them for a new invite link if you need back in.` No retry button.
-- System row (remaining participants): `Shash removed Teja from the session.`
+- System row (remaining participants): `Ava removed Sam from the session.`
 - Guest's token(s) are dead; rejoining requires a fresh invite.
 - **ASSUMPTION (protocol):** revoke/read-only are host-only WS messages
   (`participant_update { id, canSend }` / `participant_remove { id }` or equivalent), and
   the server enforces `canSend` server-side — a revoked guest's `send` must be rejected
   with an error event even if the client UI were bypassed. UI disablement is cosmetic;
   enforcement is the server's job.
-- **Claude's view:** on remove, inject roster note `Teja has left the session.` On
+- **Claude's view:** on remove, inject roster note `Sam has left the session.` On
   read-only, no note needed (they're still present).
 
 **Demo note:** the brief's success criterion says "host revokes the guest; guest can no
@@ -271,9 +271,9 @@ the full-screen state reads instantly on camera, and mentions A verbally.
 
 ### 6.5 Leaving / ending
 - Guest closes tab: after a 5s disconnect grace (no reconnect), system row
-  `Teja left the session.`, chip removed, roster note to Claude.
+  `Sam left the session.`, chip removed, roster note to Claude.
 - Host closes tab: session keeps living server-side for the POC (in-memory anyway);
-  guests see the host chip go to `Shash · away` (muted) if presence events exist —
+  guests see the host chip go to `Ava · away` (muted) if presence events exist —
   **nice-to-have; if presence isn't in the protocol, do nothing on host disconnect.**
   No "end session" button in POC (deferred; don't build).
 
@@ -364,17 +364,17 @@ Error-state copy: see table in §7.3.
 ## 9. Demo script — under 3 minutes
 
 Pre-demo setup (not counted): `npm install && npm start`, open printed URL in Window A
-(host) and keep Window B empty; seed a small `demo/` folder in the repo with 2–3 fake TPU
+(host) and keep Window B empty; seed a small `demo/` folder in the repo with 2–3 fake hardware-profiling
 vendor quote files so Claude's read-only tools have something real to read. Both windows
 side by side, ~50% screen each. Zoom browser to 110% for projector legibility.
 
 | t | Beat | Action | Say |
 |---|---|---|---|
-| 0:00 | Problem | Nothing on screen yet but Window A. | "Shash is deep in a TPU procurement task with Claude. He needs Teja from IT. Today that means relaying every question over chat — human telephone. Watch the alternative." |
-| 0:15 | Host works | A: name `Shash`, Start session. Send: `Compare the TPU vendor quotes in the demo folder and flag anything IT needs to sign off on.` Claude streams, reads files (tool chips visible). | "Claude's doing real work — reading actual files, streaming back. Standard single-player session." |
+| 0:00 | Problem | Nothing on screen yet but Window A. | "Ava is deep in a kernel-debugging task on the new accelerator with Claude. He needs Sam from the hardware team. Today that means relaying every question over chat — human telephone. Watch the alternative." |
+| 0:15 | Host works | A: name `Ava`, Start session. Send: `Compare the kernel profiles in the demo folder and flag anything the HW team needs to sign off on.` Claude streams, reads files (tool chips visible). | "Claude's doing real work — reading actual files, streaming back. Standard single-player session." |
 | 0:50 | Tag in | A: click **Tag in +**, modal up, **Copy link**. | "Here's the new part. One click — a single-use link, 30-minute expiry. In v1 this lands in Teams; today, copy-paste." |
-| 1:05 | Join | Paste into Window B, name `Teja`, Join. B shows full transcript; A shows `Teja joined the session.` + chip pulse. | "Teja is *in the same live session*. Full context — nothing relayed, nothing lost." |
-| 1:25 | Expert talks to Claude | B sends: `I'm from IT — which of these vendors would need a new firewall exception, and what quota headroom do we have?` Claude streams to BOTH windows, answering "Teja, …" by name. | "Claude knows who joined. It answers Teja directly, by name — and Shash sees every word live. No telephone." |
+| 1:05 | Join | Paste into Window B, name `Sam`, Join. B shows full transcript; A shows `Sam joined the session.` + chip pulse. | "Sam is *in the same live session*. Full context — nothing relayed, nothing lost." |
+| 1:25 | Expert talks to Claude | B sends: `I'm from the hardware team — which of these kernels is bound by memory bandwidth on this board, and what quota headroom do we have?` Claude streams to BOTH windows, answering "Sam, …" by name. | "Claude knows who joined. It answers Sam directly, by name — and Ava sees every word live. No telephone." |
 | 2:10 | Control | A: roster chip → Remove → confirm. B flips to the removed screen. B tries nothing — composer is gone. | "The host stays in control: guests can't invite others, links die after one use, and revoke is instant — there's also a softer view-only mode." |
 | 2:30 | Close | Gesture at both windows. | "Single Node server, in-memory, `npm install && npm start`. Deferred, deliberately: SSO, persistence, redacting sensitive context, Teams delivery, attaching to a live Claude Code CLI. TagTeam: stop playing telephone with your AI — tag your expert in." |
 

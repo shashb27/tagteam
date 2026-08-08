@@ -51,7 +51,7 @@ In scope for v0 — an attacker who:
 
 Explicitly out of scope for v0 (deferred, see §8):
 - attacker on the network path (demo runs on localhost / trusted LAN, plain `ws://`);
-- guest impersonating a person ("types 'Teja'" is self-asserted — no identity);
+- guest impersonating a person ("types 'Sam'" is self-asserted — no identity);
 - guest exfiltrating transcript content they can legitimately see (no scoping/redaction yet);
 - host machine compromise, DoS beyond a trivial flood guard, multi-process consistency.
 
@@ -351,7 +351,7 @@ Three independent layers, any one of which alone blocks a write:
    allowlist (covers MCP tools or new tool names we didn't anticipate).
 
 Workspace scoping: `WORKSPACE_DIR` is a dedicated demo directory inside the repo
-(e.g. `<repo>/demo-workspace/`, seeded with the TPU-procurement demo files), passed as
+(e.g. `<repo>/demo-workspace/`, seeded with the kernel-debugging demo files), passed as
 `cwd`. Read-only tools can still *read* outside `cwd` if given absolute paths, so the
 system prompt additionally instructs Claude to stay within the workspace — belt on top
 of the real control being that no tool can *modify* anything anywhere. Do not seed
@@ -403,7 +403,7 @@ whack-a-mole; that's why it's second.
 
 ### 8.3 Third: identity — control *who people actually are*
 SSO (Entra ID for OXMIQ / Teams delivery of invites, per the deferred list). Invites
-bound to a specific person ("this link only works for teja@..."), names verified rather
+bound to a specific person ("this link only works for sam@..."), names verified rather
 than typed, per-identity audit log, revoke-by-person rather than revoke-by-connection,
 and kicked-means-kicked (v0's "kicked guest can accept a fresh invite" hole closes here).
 Last not because it matters least, but because it's the only one needing external
@@ -432,7 +432,7 @@ them, but none may grow beyond what is written here.
 - **Display-name sanitation:** trim; length 1–40; strip control chars; reject empty →
   `BAD_NAME`. Names are rendered with `textContent` (never `innerHTML`) on the client —
   same rule for message bodies. (Frontend builder owns rendering; this is the requirement.)
-  Also collapse `[` and `]` out of names so a guest named `] [Shash` can't spoof the
+  Also collapse `[` and `]` out of names so a guest named `] [Ava` can't spoof the
   server-side `[Name]:` attribution format Claude sees.
 - **Session teardown:** when the host socket closes and does not reconnect within 60 s,
   close all guest sockets (4410 "session ended") and delete the session + its invites.
