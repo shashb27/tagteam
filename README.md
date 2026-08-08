@@ -31,6 +31,16 @@
 
 If any of these are just "Monday" for you, this is the fix.
 
+## See it work — 30 seconds, zero credentials
+
+<p align="center">
+  <img src="docs/assets/demo.gif" alt="TagTeam demo: Ava (host, left) tags Sam (guest, right) into her live Claude session" width="100%" />
+</p>
+
+<p align="center">
+  <em>Ava (left) works the kernel bug with Claude, tags Sam in with a single-use link — Sam (right) joins with the full transcript, asks Claude directly, gets answered by name, and is set to view-only when done. Recorded in mock mode: <code>MOCK_CLAUDE=1 npm start</code>. (<a href="docs/assets/demo.mp4">higher-quality MP4</a>)</em>
+</p>
+
 ## The Problem
 
 Every team — software, hardware, marketing, sales — now works with AI. But every session is a **silo**: one person's context, one person's prompts, one person's conversation. The moment a task crosses a team boundary, all that AI leverage collapses into a game of telephone.
