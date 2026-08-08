@@ -140,6 +140,10 @@ cd tagteam
 npm install
 ```
 
+<p align="center">
+  <img src="docs/assets/install-cast.svg" alt="Install and start TagTeam in mock mode" width="90%" />
+</p>
+
 Then pick a run mode. All three serve the app at **http://localhost:3000** (override with `PORT=…`; the server prints the URL on startup).
 
 ### 1. Mock mode — recommended for judging (zero credentials)
