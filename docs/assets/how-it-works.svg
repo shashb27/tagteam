@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 340" role="img" aria-label="How TagTeam works: work, tag in, collaborate, control.">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <!-- background -->
+  <rect x="0" y="0" width="1200" height="340" rx="20" fill="#0f172a"/>
+
+  <!-- connecting arrows -->
+  <line x1="288" y1="178" x2="325" y2="178" stroke="#64748b" stroke-width="3" marker-end="url(#arr)"/>
+  <line x1="581" y1="178" x2="618" y2="178" stroke="#64748b" stroke-width="3" marker-end="url(#arr)"/>
+  <line x1="874" y1="178" x2="911" y2="178" stroke="#64748b" stroke-width="3" marker-end="url(#arr)"/>
+
+  <!-- step 1: Work -->
+  <rect x="40" y="58" width="240" height="240" rx="16" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+  <circle cx="160" cy="58" r="22" fill="#22d3ee"/>
+  <text x="160" y="66" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="22" font-weight="800" fill="#0f172a">1</text>
+  <text x="160" y="112" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="23" font-weight="700" fill="#e2e8f0">Work</text>
+  <rect x="138" y="124" width="44" height="4" rx="2" fill="#22d3ee"/>
+  <text x="160" y="160" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="20" fill="#94a3b8">Ava debugs a</text>
+  <text x="160" y="186" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="20" fill="#94a3b8">kernel with Claude</text>
+
+  <!-- step 2: Tag in -->
+  <rect x="333" y="58" width="240" height="240" rx="16" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+  <circle cx="453" cy="58" r="22" fill="#fbbf24"/>
+  <text x="453" y="66" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="22" font-weight="800" fill="#0f172a">2</text>
+  <text x="453" y="112" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="23" font-weight="700" fill="#e2e8f0">Tag in</text>
+  <rect x="431" y="124" width="44" height="4" rx="2" fill="#fbbf24"/>
+  <text x="453" y="160" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="20" fill="#94a3b8">single-use, 30-min</text>
+  <text x="453" y="186" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="20" fill="#94a3b8">invite link</text>
+
+  <!-- step 3: Collaborate -->
+  <rect x="626" y="58" width="240" height="240" rx="16" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+  <circle cx="746" cy="58" r="22" fill="#a78bfa"/>
+  <text x="746" y="66" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="22" font-weight="800" fill="#0f172a">3</text>
+  <text x="746" y="112" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="23" font-weight="700" fill="#e2e8f0">Collaborate</text>
+  <rect x="724" y="124" width="44" height="4" rx="2" fill="#a78bfa"/>
+  <text x="746" y="160" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="20" fill="#94a3b8">Sam joins live —</text>
+  <text x="746" y="186" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="20" fill="#94a3b8">full transcript,</text>
+  <text x="746" y="212" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="20" fill="#94a3b8">speaks to Claude</text>
+  <text x="746" y="238" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="20" fill="#94a3b8">directly — every</text>
+  <text x="746" y="264" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="20" fill="#94a3b8">message attributed</text>
+
+  <!-- step 4: Control -->
+  <rect x="919" y="58" width="240" height="240" rx="16" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+  <circle cx="1039" cy="58" r="22" fill="#22d3ee"/>
+  <text x="1039" y="66" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="22" font-weight="800" fill="#0f172a">4</text>
+  <text x="1039" y="112" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="23" font-weight="700" fill="#e2e8f0">Control</text>
+  <rect x="1017" y="124" width="44" height="4" rx="2" fill="#22d3ee"/>
+  <text x="1039" y="160" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="20" fill="#94a3b8">host revokes</text>
+  <text x="1039" y="186" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="20" fill="#94a3b8">access anytime</text>
+</svg>

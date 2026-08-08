@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 460" role="img" aria-label="Comparison: today's telephone game versus one shared TagTeam session.">
+  <defs>
+    <marker id="arrDown" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#64748b"/>
+    </marker>
+    <marker id="arrCyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 Z" fill="#22d3ee"/>
+    </marker>
+  </defs>
+
+  <!-- background -->
+  <rect x="0" y="0" width="1200" height="460" rx="20" fill="#0f172a"/>
+  <line x1="600" y1="40" x2="600" y2="420" stroke="#334155" stroke-width="2" stroke-dasharray="6 8"/>
+
+  <!-- ======================= LEFT: telephone game ======================= -->
+  <text x="315" y="66" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="26" font-weight="700" fill="#e2e8f0">Today: the telephone game</text>
+
+  <!-- Sam -->
+  <rect x="190" y="96" width="250" height="66" rx="14" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+  <text x="315" y="122" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#a78bfa">Sam</text>
+  <text x="315" y="145" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="14" fill="#94a3b8">hardware architect (guest)</text>
+
+  <!-- Ava -->
+  <rect x="190" y="196" width="250" height="66" rx="14" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+  <text x="315" y="222" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="19" font-weight="700" fill="#22d3ee">Ava</text>
+  <text x="315" y="245" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="14" fill="#94a3b8">software (host)</text>
+
+  <!-- Claude -->
+  <rect x="190" y="296" width="250" height="60" rx="14" fill="#1e293b" stroke="#475569" stroke-width="2"/>
+  <path d="M272 316 Q274.5 323.5 282 326 Q274.5 328.5 272 336 Q269.5 328.5 262 326 Q269.5 323.5 272 316 Z" fill="#fbbf24"/>
+  <text x="290" y="333" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#e2e8f0">Claude</text>
+
+  <!-- relay arrows: down (asks / retypes), up (answers / paraphrases) -->
+  <line x1="265" y1="164" x2="265" y2="192" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrDown)"/>
+  <text x="253" y="183" text-anchor="end" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" fill="#94a3b8">asks</text>
+  <line x1="365" y1="194" x2="365" y2="166" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrDown)"/>
+  <text x="377" y="183" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" fill="#94a3b8">paraphrases</text>
+
+  <line x1="265" y1="264" x2="265" y2="292" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrDown)"/>
+  <text x="253" y="283" text-anchor="end" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" fill="#94a3b8">retypes</text>
+  <line x1="365" y1="294" x2="365" y2="266" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrDown)"/>
+  <text x="377" y="283" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" fill="#94a3b8">answers</text>
+
+  <text x="315" y="412" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="20" font-style="italic" fill="#fbbf24">every hop loses context ×10</text>
+
+  <!-- ======================= RIGHT: TagTeam ======================= -->
+  <text x="900" y="66" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="26" font-weight="700" fill="#22d3ee">With TagTeam</text>
+
+  <!-- shared session bubble -->
+  <rect x="660" y="96" width="480" height="280" rx="26" fill="#1e293b" stroke="#22d3ee" stroke-width="2"/>
+  <rect x="826" y="82" width="148" height="28" rx="14" fill="#0f172a" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="900" y="101" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="600" fill="#22d3ee">one live session</text>
+
+  <!-- Ava chip -->
+  <rect x="686" y="140" width="206" height="64" rx="12" fill="#0f172a" stroke="#22d3ee" stroke-width="2"/>
+  <text x="789" y="166" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="18" font-weight="700" fill="#22d3ee">Ava</text>
+  <text x="789" y="188" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" fill="#94a3b8">software (host)</text>
+
+  <!-- Sam chip -->
+  <rect x="908" y="140" width="206" height="64" rx="12" fill="#0f172a" stroke="#a78bfa" stroke-width="2"/>
+  <text x="1011" y="166" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="18" font-weight="700" fill="#a78bfa">Sam</text>
+  <text x="1011" y="188" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" fill="#94a3b8">hardware architect (guest)</text>
+
+  <!-- direct lines to Claude -->
+  <line x1="789" y1="204" x2="877" y2="260" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round" marker-end="url(#arrCyan)"/>
+  <line x1="1011" y1="204" x2="925" y2="260" stroke="#a78bfa" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Claude node -->
+  <rect x="830" y="264" width="140" height="64" rx="14" fill="#0f172a" stroke="#fbbf24" stroke-width="2"/>
+  <path d="M858 286 Q860.5 293.5 868 296 Q860.5 298.5 858 306 Q855.5 298.5 848 296 Q855.5 293.5 858 286 Z" fill="#fbbf24"/>
+  <text x="876" y="303" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="20" font-weight="700" fill="#e2e8f0">Claude</text>
+
+  <text x="900" y="412" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="20" font-style="italic" fill="#22d3ee">zero hops — one shared session</text>
+</svg>
