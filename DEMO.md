@@ -1,7 +1,9 @@
 # TagTeam — 3-minute demo script
 
-Cast (fictional, per the brief): **Ava** — engineer running a TPU procurement
-evaluation (host). **Sam** — IT/infrastructure lead (tagged-in expert).
+Cast (fictional, per the brief): **Ava** — software engineer debugging why
+inference kernels underperform on the company's new AXB-200 accelerator
+board (host). **Sam** — senior hardware architect (tagged-in expert).
+**Kai** — junior engineer who can optionally shadow.
 
 ## Setup (before you start the clock)
 
@@ -21,41 +23,46 @@ chips — skip the "watch the tool chips" line and the demo still works.
 ## The script
 
 **0:00 — The problem (say it while typing).**
-"Ava is evaluating TPU vendors with Claude. Normally, when she hits an IT
-question, she'd screenshot Claude's answer into chat, relay Sam's reply back,
-and lose context on every hop. Watch instead."
+"Ava is a software engineer. Her inference kernels are mysteriously slow on
+the company's new accelerator board. Normally, when she hits a hardware
+question, she'd screenshot Claude's answer into chat, relay the hardware
+team's reply back, and lose context on every hop. Watch instead."
 
 **0:15 — Host works with Claude on real files.** Ava sends:
 
-> Compare the TPU vendor quotes in the demo folder and recommend one for an
-> 8-week benchmarking pilot.
+> Compare the kernel profiles in the demo folder and flag anything the
+> hardware team needs to weigh in on.
 
 Point at the streaming response — and, on the SDK backend, at the tool chips:
 "Claude is doing real work here, reading actual files on the server, not
-roleplaying." (It reads `tpu-quotes.md` / `vendor-comparison.md` — three
-fictional vendors, real tradeoffs.)
+roleplaying." (It reads `kernel-profile.md` / `board-specs.md` — five real
+kernels; four healthy, and `kv_cache_gather` stuck at 704 GB/s, just 22% of
+the board's 3,200 GB/s peak.)
 
-**0:50 — The wall.** "The recommendation depends on firewall exceptions and
-cloud quotas. That answer lives with IT — with Sam. Today this becomes a
-20-message relay thread. In TagTeam, Ava tags Sam in."
+**0:50 — The wall.** "Claude found the smoking gun — unaligned DMA reads
+falling back to a slow path. But is that really errata E7? And is the padding
+workaround safe to ship? That answer lives with the hardware team — with Sam.
+Today this becomes a 20-message relay thread. In TagTeam, Ava tags Sam in."
 
 **1:00 — Tag in.** Ava clicks **Tag in a colleague** → **Copy link**. Mention
 the guardrail as you copy: "single-use link, expires in 30 minutes." Paste
 the URL into the right-hand window, type `Sam`, click **Join session**.
 
 **1:15 — The money shot.** Sam's window shows the **full transcript** — the
-quotes discussion, everything. Both rosters show Ava, Sam, and Claude. Point
-at the "Sam joined the session" line landing live in Ava's window.
+kernel-profile analysis, everything. Both rosters show Ava, Sam, and Claude.
+Point at the "Sam joined the session" line landing live in Ava's window.
 
 **1:25 — The expert talks to Claude directly.** Sam sends:
 
-> Do we already have firewall exceptions for these vendor portals, and is our
-> chip quota enough for the pilot?
+> Is the kv_cache_gather slowdown the unaligned-DMA errata, and can we pad
+> the KV entries to 256 bytes without blowing the memory budget?
 
-Claude answers **addressing Sam by name**, pulling from `it-network-notes.md`
-(one vendor already allowlisted, quota short of the 64-chip config, file the
-increase before the PO). Ava sees every token live. "No relay. No paraphrase
-loss. Both humans and Claude in one room, and Claude knows who's who."
+Claude answers **addressing Sam by name**, pulling from `hw-constraints.md`
+(errata E7 confirmed — the 160-byte KV stride breaks the 256-byte DMA
+alignment; padding restores the fast path but costs ~60% more HBM in that
+region; the gather-scatter DMA mode needs Sam's sign-off). Ava sees every
+token live. "No relay. No paraphrase loss. Both humans and Claude in one
+room, and Claude knows who's who."
 
 **2:10 — Guardrails.** In Ava's roster, hover Sam's row:
 1. Click the eye icon → **view-only**. Sam's composer locks with a banner;
@@ -63,6 +70,9 @@ loss. Both humans and Claude in one room, and Claude knows who's who."
 2. Click it again → **restore**. Sam can send again.
 3. Click ✕ twice → **kick**. Sam gets a clean "removed from session" screen
    and the invite link is dead — single-use, remember.
+
+(Optional, if time allows: mint a second link for `Kai`, a junior engineer
+who shadows the debugging session view-only — sessions fit two guests.)
 
 **2:40 — Close.** "Single Node server, in-memory, `npm install && npm start`.
 Deliberately deferred to v1: real identity/SSO, persistence, redacting
