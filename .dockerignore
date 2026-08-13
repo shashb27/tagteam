@@ -1,0 +1,29 @@
+node_modules
+npm-debug.log
+.npm
+
+# Runtime data (mounted as volumes in compose)
+data
+logs
+
+# Test / CI artifacts
+coverage
+test-results
+playwright-report
+playwright/.cache
+
+# Git + editor
+.git
+.gitignore
+.vscode
+.idea
+
+# Misc
+*.tgz
+*.log
+.env
+.env.*
+!.env.example
+Dockerfile
+docker-compose.yml
+.dockerignore

@@ -84,8 +84,8 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked
 
 ### M1 gate
 - [x] 1.19 Cross-device resume E2E (two machines / two profiles). — qa
-- [~] 1.20 Critic sign-off on M1. — critic
-- [ ] 1.21 Commit + push. — boss
+- [x] 1.20 Critic sign-off on M1. — critic (approve)
+- [x] 1.21 Commit + push. — boss (committed 33c6033)
 
 ---
 

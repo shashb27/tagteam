@@ -12,7 +12,7 @@ import { randomUUID } from 'node:crypto';
 import pino from 'pino';
 import { stmts as dbStmts, tx } from './db.js';
 
-const LOG_DIR = path.resolve(process.cwd(), 'logs');
+const LOG_DIR = process.env.LOG_DIR ? path.resolve(process.env.LOG_DIR) : path.resolve(process.cwd(), 'logs');
 fs.mkdirSync(LOG_DIR, { recursive: true });
 const LOG_PATH = path.join(LOG_DIR, 'tagteam.log');
 

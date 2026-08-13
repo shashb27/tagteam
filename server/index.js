@@ -289,7 +289,7 @@ function handleHttp(req, res) {
   }
 
   if (req.method === 'GET' || req.method === 'HEAD') {
-    if (pathname === '/' || pathname === '/join' || pathname.startsWith('/join/')) {
+    if (pathname === '/' || pathname === '/join' || pathname.startsWith('/join/') || pathname === '/dashboard' || pathname === '/my-sessions') {
       serveIndex(res);
       return;
     }

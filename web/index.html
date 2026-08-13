@@ -58,16 +58,19 @@
         <span id="conn-text" class="conn-text">Live</span>
       </span>
       <span class="topbar-spacer"></span>
+      <button id="dashboard-btn" class="btn-ghost" type="button" title="My sessions">My sessions</button>
       <button id="logout-btn" class="btn-ghost" type="button" title="Sign out">Logout</button>
       <button id="tagin-btn" class="btn-primary" type="button">Tag in a colleague</button>
+      <button id="sidebar-toggle" class="btn-ghost sidebar-toggle" type="button"
+              aria-label="Toggle participants" aria-expanded="false" aria-controls="sidebar" title="Participants">&hellip;</button>
     </header>
 
     <div class="chat-body">
       <div class="transcript-wrap">
-        <section id="transcript" class="transcript" aria-live="polite"></section>
-        <button id="jump-latest" class="jump-latest hidden" type="button">&darr; New messages</button>
+        <section id="transcript" class="transcript" role="log" aria-live="polite" aria-label="Conversation transcript"></section>
+        <button id="jump-latest" class="jump-latest hidden" type="button" aria-label="Jump to latest messages">&darr; New messages</button>
       </div>
-      <aside id="sidebar" class="sidebar">
+      <aside id="sidebar" class="sidebar" aria-label="Participants">
         <h2 class="sidebar-h">In the room</h2>
         <ul id="participants" class="participants"></ul>
       </aside>
@@ -82,13 +85,29 @@
     </form>
   </div>
 
-  <!-- Screen 3: fatal / kicked / ended -->
-  <main id="fatal" class="gate hidden">
-    <h1 class="logo">Tag<span class="logo-accent">Team</span></h1>
-    <p id="fatal-title" class="gate-title"></p>
-    <p id="fatal-msg" class="gate-sub"></p>
-    <a href="/" id="fatal-home" class="fatal-home">Start your own session</a>
-  </main>
+    <!-- Screen 3: fatal / kicked / ended -->
+    <main id="fatal" class="gate hidden">
+      <h1 class="logo">Tag<span class="logo-accent">Team</span></h1>
+      <p id="fatal-title" class="gate-title"></p>
+      <p id="fatal-msg" class="gate-sub"></p>
+      <a href="/" id="fatal-home" class="fatal-home">Start your own session</a>
+    </main>
+
+    <!-- Screen 4: session dashboard (M2) -->
+    <main id="dashboard" class="dashboard hidden" aria-label="Your sessions">
+      <header class="dashboard-head">
+        <h1 class="logo">Tag<span class="logo-accent">Team</span></h1>
+        <p class="dashboard-title">Your sessions</p>
+        <p id="dashboard-sub" class="dashboard-sub">Sessions you host or have joined, on any device.</p>
+        <div class="dashboard-actions">
+          <button id="dash-new" class="btn-primary" type="button">Start a new session</button>
+          <button id="dash-back" class="btn-ghost" type="button">Back to current session</button>
+        </div>
+      </header>
+      <div id="dashboard-list" class="dashboard-list" role="list" aria-busy="true">
+        <p class="dashboard-empty hidden" id="dashboard-empty">No sessions yet. Start one to see it here.</p>
+      </div>
+    </main>
 
   <!-- Invite modal (host only) -->
   <div id="modal" class="modal hidden">
@@ -97,8 +116,8 @@
       <p class="modal-body">They&rsquo;ll join this live conversation &mdash; full transcript,
         direct line to the assistant. Link is single-use and expires in 30 minutes.</p>
       <div class="invite-row">
-        <input id="invite-url" readonly spellcheck="false">
-        <button id="copy-btn" type="button">Copy link</button>
+        <input id="invite-url" readonly spellcheck="false" aria-label="Invite link">
+        <button id="copy-btn" type="button" aria-label="Copy invite link to clipboard">Copy link</button>
       </div>
       <p class="invite-meta">Single use &middot; expires in <span id="invite-ttl">30:00</span></p>
       <p class="modal-foot">Guests can&rsquo;t invite others. You can revoke access anytime from the roster.<br>
