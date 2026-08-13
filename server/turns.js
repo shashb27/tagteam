@@ -5,6 +5,7 @@ import {
   DELTA_FLUSH_BYTES, DELTA_FLUSH_MS, RUN_TIMEOUT_MS, MAX_PENDING_MESSAGES,
 } from './config.js';
 import { appendMessage, broadcast, getSession, touch } from './sessions.js';
+import { noteError } from './observe.js';
 
 let backend = null;
 
@@ -233,6 +234,7 @@ async function startRun(session) {
     });
   } catch (err) {
     console.error(`[turns] run failed for session ${session.id}:`, err);
+    noteError();
     flushDeltas(session);
     assistantMessage.streaming = false;
     broadcast(session, {

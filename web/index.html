@@ -7,7 +7,29 @@
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="/web/style.css">
 </head>
-<body data-screen="gate">
+<body data-screen="auth">
+
+  <!-- Screen 0: auth gate (login / register) — M1 -->
+  <main id="auth" class="gate hidden">
+    <h1 class="logo">Tag<span class="logo-accent">Team</span></h1>
+    <p id="auth-title" class="gate-title">Sign in to TagTeam</p>
+    <p id="auth-sub" class="gate-sub">Sign in or create a local account to start a shared session.</p>
+    <form id="auth-form" class="auth-form" autocomplete="on">
+      <input id="auth-email" type="email" autocomplete="email"
+             placeholder="you@example.com" spellcheck="false" required>
+      <input id="auth-name" type="text" autocomplete="name"
+             placeholder="Your display name" spellcheck="false" hidden>
+      <input id="auth-password" type="password" autocomplete="current-password"
+             placeholder="Password" minlength="10" required>
+      <p id="auth-hint" class="auth-hint hidden">At least 10 characters, including a letter and a digit.</p>
+      <p id="auth-error" class="gate-error hidden"></p>
+      <button id="auth-btn" type="submit">Sign in</button>
+    </form>
+    <p class="auth-switch">
+      <span id="auth-switch-text">Need an account?</span>
+      <button id="auth-switch" type="button" class="link-btn">Register</button>
+    </p>
+  </main>
 
   <!-- Screen 1: name gate (host + guest variants, toggled by JS) -->
   <main id="gate" class="gate">
@@ -36,6 +58,7 @@
         <span id="conn-text" class="conn-text">Live</span>
       </span>
       <span class="topbar-spacer"></span>
+      <button id="logout-btn" class="btn-ghost" type="button" title="Sign out">Logout</button>
       <button id="tagin-btn" class="btn-primary" type="button">Tag in a colleague</button>
     </header>
 

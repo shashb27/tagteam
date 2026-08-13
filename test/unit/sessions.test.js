@@ -8,9 +8,11 @@ import {
   serializeParticipant, serializeMessage, buildSnapshot,
   sendToParticipant, destroySession, startSweeper,
 } from '../../server/sessions.js';
+import { resetDb } from '../../server/db.js';
 import { INVITE_TTL_MINUTES_MAX, MAX_GUESTS, MAX_SESSIONS, BASE_URL } from '../../server/config.js';
 
 beforeEach(() => {
+  resetDb();
   sessions.clear();
   inviteIndex.clear();
 });

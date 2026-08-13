@@ -18,12 +18,23 @@ import {
   appendMessage, appendSystemMessage,
   serializeParticipant, serializeMessage, buildSnapshot,
   broadcast, sendToParticipant, startSweeper,
+  markInviteUsed, revokeInvite,
+  setParticipantStatus, setParticipantCanSend,
+  loadFromDisk, sessions as sessionsMap,
 } from './sessions.js';
 import {
   setBackend, backendInfo, flushDeltas, enqueueUserMessage, pendingIsFull,
   noteRosterChange,
 } from './turns.js';
 import { createAgentBackend } from './agent/index.js';
+import { migrate } from './db.js';
+import { AuthProvider, clientIp, sessionCookieValue, clearCookieValue } from './auth/index.js';
+import {
+  checkOrigin, rateLimit, ensureCsrfCookie, checkCsrf, enforceCaps,
+  CSRF_COOKIE_NAME,
+} from './guard.js';
+import { audit, log, noteMessage, noteError, noteConnection, noteRunMs, getMetrics } from './observe.js';
+import { randomUUID } from 'node:crypto';
 
 // ---------------------------------------------------------------------------
 // Static files
@@ -82,21 +93,131 @@ function serveIndex(res) {
 // ---------------------------------------------------------------------------
 // HTTP surface (architecture doc §3)
 
+// ---------------------------------------------------------------------------
+// HTTP surface (architecture doc §3)
+
+/** Read + parse a JSON body, capped at 64 KB. Resolves null on parse error. */
+function readJsonBody(req) {
+  return new Promise((resolve) => {
+    let data = '';
+    let aborted = false;
+    req.on('data', (chunk) => {
+      data += chunk;
+      if (data.length > 65536) { aborted = true; req.destroy(); }
+    });
+    req.on('end', () => {
+      if (aborted) return resolve(null);
+      if (data.length === 0) return resolve({});
+      try { resolve(JSON.parse(data)); } catch { resolve(null); }
+    });
+    req.on('error', () => resolve(null));
+  });
+}
+
+function sendJson(res, status, obj, extraHeaders = {}) {
+  res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', ...extraHeaders });
+  res.end(JSON.stringify(obj));
+}
+
+/** Verify CSRF + origin on state-changing POST /api/*. Returns true on pass. */
+function guardPostApi(req, res) {
+  if (!checkOrigin(req)) {
+    sendJson(res, 403, { error: 'origin_not_allowed' });
+    return false;
+  }
+  if (!checkCsrf(req)) {
+    sendJson(res, 403, { error: 'csrf_token_invalid' });
+    return false;
+  }
+  return true;
+}
+
+/** Mint a fresh CSRF cookie value (for post-login rotation). */
+function freshCsrfCookieValue() {
+  const token = randomUUID();
+  const secure = String(process.env.BASE_URL || '').startsWith('https');
+  const parts = [`${CSRF_COOKIE_NAME}=${token}`, 'Path=/', 'SameSite=Lax', `Max-Age=${7 * 24 * 60 * 60}`];
+  if (secure) parts.push('Secure');
+  return parts.join('; ');
+}
+
+async function handleAuthRoute(req, res, url) {
+  const { pathname } = url;
+  const ip = clientIp(req);
+
+  if (req.method === 'POST' && pathname === '/api/auth/register') {
+    if (!guardPostApi(req, res)) return;
+    const body = await readJsonBody(req);
+    if (!body || typeof body !== 'object') return sendJson(res, 400, { error: 'bad_body' });
+    try {
+      const { user, sid } = await AuthProvider.register({
+        email: body.email, password: body.password, name: body.name,
+      });
+      audit('login_success', { userId: user.id, detail: { kind: 'register' } });
+      // Rotate CSRF token on login (security §6).
+      res.setHeader('Set-Cookie', [sessionCookieValue(sid), freshCsrfCookieValue()]);
+      sendJson(res, 201, { user });
+    } catch (err) {
+      audit('login_fail', { detail: { ip, reason: err.code || 'register_error' } });
+      const status = err.code === 'EMAIL_TAKEN' ? 409 : 400;
+      sendJson(res, status, { error: err.code || 'register_failed', message: err.message });
+    }
+    return;
+  }
+
+  if (req.method === 'POST' && pathname === '/api/auth/login') {
+    if (!guardPostApi(req, res)) return;
+    const body = await readJsonBody(req);
+    if (!body || typeof body !== 'object') return sendJson(res, 400, { error: 'bad_body' });
+    try {
+      const { user, sid } = await AuthProvider.login(
+        { email: body.email, password: body.password },
+        { ip },
+      );
+      audit('login_success', { userId: user.id });
+      res.setHeader('Set-Cookie', [sessionCookieValue(sid), freshCsrfCookieValue()]);
+      sendJson(res, 200, { user });
+    } catch (err) {
+      audit('login_fail', { detail: { ip, reason: err.code || 'login_error' } });
+      const status = err.code === 'LOGIN_LOCKED' ? 429 : 401;
+      const headers = err.code === 'LOGIN_LOCKED' ? { 'Retry-After': '900' } : {};
+      sendJson(res, status, { error: err.code || 'login_failed', message: err.message }, headers);
+    }
+    return;
+  }
+
+  if (req.method === 'POST' && pathname === '/api/auth/logout') {
+    if (!guardPostApi(req, res)) return;
+    req.resume();
+    const user = AuthProvider.currentUser(req);
+    AuthProvider.logout(req);
+    if (user) audit('login_success', { userId: user.id, detail: { kind: 'logout' } });
+    res.setHeader('Set-Cookie', clearCookieValue());
+    sendJson(res, 200, { ok: true });
+    return;
+  }
+
+  if (req.method === 'GET' && pathname === '/api/auth/me') {
+    const user = AuthProvider.currentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'not_authenticated' });
+    sendJson(res, 200, { user });
+    return;
+  }
+}
+
 function handleHttp(req, res) {
   const url = new URL(req.url, 'http://internal');
   const { pathname } = url;
 
-  if (req.method === 'POST' && pathname === '/api/sessions') {
-    // Body is deliberately ignored.
-    req.resume();
-    if (!canCreateSession()) {
-      res.writeHead(503, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'too_many_sessions' }));
-      return;
-    }
-    const session = createSession(req.headers.host);
-    res.writeHead(201, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ sessionId: session.id, hostKey: session.hostKey, wsPath: '/ws' }));
+  // Every GET sets the CSRF cookie if absent (so the browser JS can read it
+  // and echo it back as X-CSRF-Token on the next POST /api/*).
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    ensureCsrfCookie(req, res);
+  }
+
+  // /metricsz — non-authenticated counters only (security §7).
+  if (req.method === 'GET' && pathname === '/metricsz') {
+    sendJson(res, 200, getMetrics(sessionsMap.size));
     return;
   }
 
@@ -109,6 +230,61 @@ function handleHttp(req, res) {
   if (req.method === 'GET' && pathname === '/api/config') {
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({ modelName: backendInfo().assistantName }));
+    return;
+  }
+
+  if (req.method === 'GET' && pathname === '/api/sessions') {
+    // M1: authenticated, read-only list scoped to the current user. Does
+    // not expose host keys or transcript text; never leaks other users'
+    // session ids, names, or participant lists.
+    const user = AuthProvider.currentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'not_authenticated' });
+    const list = [];
+    for (const s of sessionsMap.values()) {
+      const isHost = s.hostUserId === user.id;
+      const isParticipant = [...s.participants.values()].some((p) => p.userId === user.id);
+      if (!isHost && !isParticipant) continue;
+      list.push({
+        sessionId: s.id,
+        createdAt: s.createdAt,
+        lastActivityAt: s.lastActivityAt,
+        participants: [...s.participants.values()].map(serializeParticipant),
+      });
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ sessions: list, count: list.length }));
+    return;
+  }
+
+  // Auth routes (register / login / logout / me). These handle their own
+  // body parsing + CSRF + origin via guardPostApi.
+  if (pathname.startsWith('/api/auth/')) {
+    handleAuthRoute(req, res, url);
+    return;
+  }
+
+  if (req.method === 'POST' && pathname === '/api/sessions') {
+    // CSRF + origin first.
+    if (!guardPostApi(req, res)) return;
+    req.resume();
+    // M1: no anonymous sessions — the host must be authenticated.
+    const user = AuthProvider.currentUser(req);
+    if (!user) return sendJson(res, 401, { error: 'not_authenticated' });
+    // Per-IP rate limit: 10 session creates / min.
+    const ip = clientIp(req);
+    const rl = rateLimit(ip, 'session', 10, 60_000);
+    if (!rl.ok) {
+      audit('rate_limited', { userId: user.id, detail: { ip, bucket: 'session' } });
+      return sendJson(res, 429, { error: 'rate_limited', retryAfter: rl.retryAfter }, { 'Retry-After': String(rl.retryAfter) });
+    }
+    // Caps: total sessions + login lockout (guest cap is enforced at WS join).
+    const caps = enforceCaps(req, { sessionsCount: sessionsMap.size });
+    if (!caps.ok) return sendJson(res, 503, { error: caps.code });
+    if (!canCreateSession()) return sendJson(res, 503, { error: 'too_many_sessions' });
+    const session = createSession(req.headers.host, user.id);
+    audit('session_create', { sessionId: session.id, userId: user.id });
+    res.writeHead(201, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ sessionId: session.id, hostKey: session.hostKey, wsPath: '/ws' }));
     return;
   }
 
@@ -130,6 +306,7 @@ function handleHttp(req, res) {
     return;
   }
 
+
   res.writeHead(404, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ error: 'not_found' }));
 }
@@ -138,8 +315,11 @@ function handleHttp(req, res) {
 // WebSocket connection layer
 
 // Per-socket state, keyed by the socket object.
-// { sessionId, participantId, floodTimestamps: number[] }
+// { sessionId, participantId, floodTimestamps: number[], ip: string, authUser: User|null }
 const socketState = new WeakMap();
+// Pre-join metadata (authUser + ip captured at the WS upgrade handshake).
+// Kept separate so `socketState.has(socket)` stays the "joined?" marker.
+const wsMeta = new WeakMap();
 
 function participantOf(socket) {
   const state = socketState.get(socket);
@@ -154,10 +334,13 @@ function attachAndReply(socket, session, participant) {
   const wasConnected = participant.connected;
   participant.sockets.add(socket);
   participant.connected = true;
+  const meta = wsMeta.get(socket);
   socketState.set(socket, {
     sessionId: session.id,
     participantId: participant.id,
     floodTimestamps: [],
+    ip: meta?.ip || '',
+    authUser: meta?.authUser ?? null,
   });
   touch(session);
 
@@ -175,12 +358,15 @@ function attachAndReply(socket, session, participant) {
       name: participant.name,
       canSend: participant.canSend,
     },
-    session: buildSnapshot(session),
+    session: buildSnapshot(session, participant),
   });
   return { wasConnected };
 }
 
 function handleJoin(socket, frame) {
+  const meta = wsMeta.get(socket);
+  const authUser = meta?.authUser ?? null;
+
   if (frame.as === 'host') {
     const session = getSession(frame.sessionId);
     if (!session) return sendError(socket, 'SESSION_NOT_FOUND', { fatal: true });
@@ -199,11 +385,12 @@ function handleJoin(socket, frame) {
           patch: { connected: true },
         }, { excludeSocket: socket });
       }
+      audit('join', { sessionId: session.id, userId: host.userId, detail: { role: 'host', rejoin: true } });
       return undefined;
     }
     const name = sanitizeName(frame.name);
     if (!name) return sendError(socket, 'BAD_NAME', { fatal: true });
-    host = createParticipant(session, { name, role: 'host' });
+    host = createParticipant(session, { name, role: 'host', userId: authUser?.id ?? session.hostUserId ?? null });
     attachAndReply(socket, session, host);
     const systemMessage = appendSystemMessage(session, `${name} joined the session.`);
     broadcast(session, {
@@ -211,17 +398,20 @@ function handleJoin(socket, frame) {
       participant: serializeParticipant(host),
       systemMessage: serializeMessage(systemMessage),
     }, { excludeSocket: socket });
+    audit('join', { sessionId: session.id, userId: host.userId, detail: { role: 'host' } });
     return undefined;
   }
 
   if (frame.as === 'guest') {
+    // M1: the guest must be logged in (no anonymous guests).
+    if (!authUser) return sendError(socket, 'NOT_JOINED', { fatal: true, message: 'Authentication required to join.' });
     const name = sanitizeName(frame.name);
     if (!name) return sendError(socket, 'BAD_NAME', { fatal: true });
     const check = checkInvite(frame.inviteToken);
     if (!check.ok) return sendError(socket, check.code, { fatal: true });
     const { session, invite } = check;
-    const guest = createParticipant(session, { name, role: 'guest' });
-    invite.usedBy = guest.id; // burn — single use, before anything async
+    const guest = createParticipant(session, { name, role: 'guest', userId: authUser.id });
+    markInviteUsed(invite, guest.id); // burn — single use, before anything async
     attachAndReply(socket, session, guest);
     const systemMessage = appendSystemMessage(session, `${name} joined the session.`);
     noteRosterChange(session, `${name} joined the session.`);
@@ -230,6 +420,7 @@ function handleJoin(socket, frame) {
       participant: serializeParticipant(guest),
       systemMessage: serializeMessage(systemMessage),
     }, { excludeSocket: socket });
+    audit('join', { sessionId: session.id, userId: guest.userId, detail: { role: 'guest' } });
     return undefined;
   }
 
@@ -252,6 +443,7 @@ function handleJoin(socket, frame) {
         patch: { connected: true },
       }, { excludeSocket: socket });
     }
+    audit('join', { sessionId: session.id, userId: participant.userId, detail: { role: participant.role, resume: true } });
     return undefined;
   }
 
@@ -273,8 +465,17 @@ function handleUserMessage(socket, frame) {
   if (text.length > MAX_MESSAGE_CHARS) return sendError(socket, 'MESSAGE_TOO_LONG', { clientMsgId });
   if (pendingIsFull(session)) return sendError(socket, 'RATE_LIMITED', { clientMsgId });
 
-  // Per-connection flood guard (security design §9): sliding window.
   const state = socketState.get(socket);
+  // Per-IP token bucket: 60 user_messages / min (security §6).
+  const ip = state?.ip || 'unknown';
+  const rl = rateLimit(ip, 'msg', 60, 60_000);
+  if (!rl.ok) {
+    audit('rate_limited', { sessionId: session.id, userId: participant.userId, detail: { ip, bucket: 'msg' } });
+    return sendError(socket, 'RATE_LIMITED', {
+      clientMsgId, message: 'Too many messages. Slow down.',
+    });
+  }
+  // Per-connection flood guard (security design §9): sliding window.
   const now = Date.now();
   const { limited } = floodCheck(state, now, FLOOD_WINDOW_MS, FLOOD_MAX_MSGS);
   if (limited) {
@@ -290,12 +491,18 @@ function handleUserMessage(socket, frame) {
     text,
   });
   touch(session);
+  noteMessage();
 
   const echo = { type: 'user_message', message: serializeMessage(message) };
   if (clientMsgId !== undefined) echo.clientMsgId = clientMsgId;
   broadcast(session, echo);
 
+  const start = Date.now();
   enqueueUserMessage(session, message);
+  // noteRunMs is recorded when the run finishes (turns.js would need a hook);
+  // for M1 we measure the enqueue cost, which is near-zero. A proper per-run
+  // sample is wired in M2 via a turns.js callback.
+  noteRunMs(Date.now() - start);
   return undefined;
 }
 
@@ -320,7 +527,7 @@ function handleRevokeInvite(socket, frame) {
   if (participant.role !== 'host') return sendError(socket, 'NOT_HOST');
   const invite = session.invites.get(frame.inviteToken);
   if (!invite || invite.usedBy !== null) return sendError(socket, 'INVALID_TOKEN');
-  invite.revoked = true;
+  revokeInvite(invite);
   touch(session);
   sendToParticipant(participant, { type: 'invite_revoked', inviteToken: invite.token });
   return undefined;
@@ -338,10 +545,10 @@ function handleRevokeGuest(socket, frame) {
   touch(session);
 
   if (mode === 'kick') {
-    target.status = 'kicked';
-    target.canSend = false;
+    setParticipantStatus(target, { status: 'kicked', canSend: false });
     const systemMessage = appendSystemMessage(session, `${target.name} was removed by the host.`);
     noteRosterChange(session, `${target.name} left the session.`);
+    audit('kick', { sessionId: session.id, userId: participant.userId, detail: { target: target.id, targetUser: target.userId } });
     // Broadcast to all sockets (including the kicked guest's), THEN close.
     broadcast(session, {
       type: 'participant_left',
@@ -359,13 +566,14 @@ function handleRevokeGuest(socket, frame) {
 
   if (mode === 'read_only' || mode === 'restore') {
     const canSend = mode === 'restore';
-    target.canSend = canSend;
+    setParticipantCanSend(target, canSend);
     const systemMessage = appendSystemMessage(
       session,
       canSend
         ? `${target.name} can send messages again.`
         : `${target.name} was made read-only by the host.`,
     );
+    audit('revoke', { sessionId: session.id, userId: participant.userId, detail: { target: target.id, mode } });
     broadcast(session, {
       type: 'participant_updated',
       participantId: target.id,
@@ -449,6 +657,16 @@ async function main() {
   const backend = await createAgentBackend();
   setBackend(backend);
 
+  // Persistence: open + migrate SQLite, then rebuild the in-memory Maps from
+  // disk so a restart resumes active sessions (restart-resume guarantee).
+  migrate();
+  const restored = loadFromDisk();
+  console.log(
+    `[persistence] restored ${restored.sessions} session(s), `
+    + `${restored.participants} participant(s), ${restored.invites} invite(s), `
+    + `${restored.messages} message(s)`,
+  );
+
   const server = http.createServer(handleHttp);
   const wss = new WebSocketServer({ noServer: true, maxPayload: WS_MAX_PAYLOAD });
 
@@ -458,23 +676,43 @@ async function main() {
       socket.destroy();
       return;
     }
+    // Origin allowlist (security §6). Same-origin browsers send no Origin on
+    // WS, which we allow; a mismatched Origin is rejected before upgrade.
+    if (!checkOrigin(req)) {
+      log.warn({ origin: req.headers.origin }, 'ws upgrade rejected: origin not allowed');
+      socket.write('HTTP/1.1 403 Forbidden\r\n\r\n');
+      socket.destroy();
+      return;
+    }
     wss.handleUpgrade(req, socket, head, (ws) => {
       wss.emit('connection', ws, req);
     });
   });
 
-  wss.on('connection', (ws) => {
+  wss.on('connection', (ws, req) => {
     ws.pingMisses = 0;
+    // Capture the auth user (from the cookie on the upgrade request) + the
+    // client IP up front, so handleJoin can bind participant.userId and the
+    // rate limiter can bucket by IP without re-reading headers per frame.
+    const authUser = AuthProvider.currentUser(req);
+    const ip = clientIp(req);
+    wsMeta.set(ws, { ip, authUser });
+    noteConnection(1);
+    log.info({ userId: authUser?.id, ip }, 'ws connected');
     ws.on('pong', () => { ws.pingMisses = 0; });
     ws.on('message', (data) => {
       try {
         handleFrame(ws, data);
       } catch (err) {
-        console.error('[ws] frame handler error:', err);
+        log.error({ err }, 'ws frame handler error');
+        noteError();
         sendError(ws, 'INTERNAL');
       }
     });
-    ws.on('close', () => handleDisconnect(ws));
+    ws.on('close', () => {
+      handleDisconnect(ws);
+      noteConnection(-1);
+    });
     ws.on('error', () => { /* close handler does the cleanup */ });
   });
 

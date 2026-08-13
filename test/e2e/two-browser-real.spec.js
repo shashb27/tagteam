@@ -17,6 +17,23 @@ const BASE = 'http://localhost:3998';
 // internally so this is a per-assertion wall-clock cap, not a fixed wait.
 const STREAM_TIMEOUT = 60_000;
 
+// Unique email per test run (M1 auth gate requires a logged-in account).
+const SUFFIX = `${Date.now()}@tagteam.test`;
+const hostEmail = `host-${SUFFIX}`;
+const guestEmail = `guest-${SUFFIX}`;
+
+// Register + login a fresh account on a fresh context, landing on the name gate.
+async function authAccount(page, email, displayName) {
+  await page.goto(BASE);
+  await expect(page.locator('#auth')).toBeVisible({ timeout: 5000 });
+  await page.locator('#auth-switch').click();
+  await page.locator('#auth-email').fill(email);
+  await page.locator('#auth-name').fill(displayName);
+  await page.locator('#auth-password').fill('Tagteam123!');
+  await page.locator('#auth-btn').click();
+  await expect(page.locator('#name-input')).toBeVisible({ timeout: 8000 });
+}
+
 test('two-browser real demo: host tags in guest, live opencode answers by name, host revokes/restores/kicks @real', async ({ browser }) => {
   // --- Two isolated contexts (sessions) in one browser ---
   const hostCtx = await browser.newContext();
@@ -28,9 +45,13 @@ test('two-browser real demo: host tags in guest, live opencode answers by name, 
   const hostFrames = [];
   hostPage.on('console', (m) => { if (m.type() === 'log') hostFrames.push(m.text()); });
 
+  // ── 0. Auth gate: register both host and guest (M1) ──────────────────────
+  await authAccount(hostPage, hostEmail, 'Ava');
+  await authAccount(guestPage, guestEmail, 'Sam');
+
   // ── 1. Host starts a session as "Ava" ─────────────────────────────────────
   await hostPage.goto(BASE);
-  await hostPage.getByPlaceholder(/Your display name/).fill('Ava');
+  await hostPage.locator('#name-input').fill('Ava');
   await hostPage.getByRole('button', { name: 'Start session' }).click();
 
   await expect(hostPage.locator('#composer')).toBeVisible({ timeout: 30_000 });
@@ -64,8 +85,8 @@ test('two-browser real demo: host tags in guest, live opencode answers by name, 
 
   // ── 4. Guest opens the invite URL and joins as "Sam" ──────────────────────
   await guestPage.goto(inviteUrl);
-  await expect(guestPage.getByPlaceholder(/Your display name/)).toBeVisible();
-  await guestPage.getByPlaceholder(/Your display name/).fill('Sam');
+  await expect(guestPage.locator('#name-input')).toBeVisible();
+  await guestPage.locator('#name-input').fill('Sam');
   await guestPage.getByRole('button', { name: 'Join session' }).click();
   await expect(guestPage.locator('#composer')).toBeVisible({ timeout: 30_000 });
 
@@ -132,7 +153,7 @@ test('two-browser real demo: host tags in guest, live opencode answers by name, 
   // The burned token cannot reconnect: reload → gate → join attempt → fatal.
   await guestPage.reload();
   await expect(guestPage.getByRole('button', { name: 'Join session' })).toBeVisible({ timeout: 10_000 });
-  await guestPage.getByPlaceholder(/Your display name/).fill('Sam');
+  await guestPage.locator('#name-input').fill('Sam');
   await guestPage.getByRole('button', { name: 'Join session' }).click();
 
   await expect(guestPage.locator('#fatal')).toBeVisible({ timeout: 10_000 });

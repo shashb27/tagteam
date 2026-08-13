@@ -10,6 +10,25 @@ const BASE = 'http://localhost:3999';
 // Mock streams word-by-word at ~25ms/word; allow up to 10s for a full reply.
 const STREAM_TIMEOUT = 10000;
 
+// Unique email per test run (M1 auth gate requires a logged-in account).
+const SUFFIX = `${Date.now()}@tagteam.test`;
+const hostEmail = `host-${SUFFIX}`;
+const guestEmail = `guest-${SUFFIX}`;
+
+// Register + login a fresh account on a fresh context, landing on the name gate.
+async function authAccount(page, email, displayName) {
+  await page.goto(BASE);
+  await expect(page.locator('#auth')).toBeVisible({ timeout: 5000 });
+  // Switch to register mode (the #auth-switch toggle says "Register" in login mode).
+  await page.locator('#auth-switch').click();
+  await page.locator('#auth-email').fill(email);
+  await page.locator('#auth-name').fill(displayName);
+  await page.locator('#auth-password').fill('Tagteam123!');
+  await page.locator('#auth-btn').click();
+  // On success → name gate (Start session) appears.
+  await expect(page.locator('#name-input')).toBeVisible({ timeout: 8000 });
+}
+
 test('two-browser demo: host tags in guest, guest joins, host revokes/restores/kicks', async ({ browser }) => {
   // --- Two isolated contexts (sessions) in one browser ---
   const hostCtx = await browser.newContext();
@@ -17,9 +36,13 @@ test('two-browser demo: host tags in guest, guest joins, host revokes/restores/k
   const hostPage = await hostCtx.newPage();
   const guestPage = await guestCtx.newPage();
 
+  // ── 0. Auth gate: register both host and guest (M1) ──────────────────────
+  await authAccount(hostPage, hostEmail, 'Ava');
+  await authAccount(guestPage, guestEmail, 'Sam');
+
   // ── 1. Host starts a session as "Ava" ─────────────────────────────────────
   await hostPage.goto(BASE);
-  await hostPage.getByPlaceholder(/Your display name/).fill('Ava');
+  await hostPage.locator('#name-input').fill('Ava');
   await hostPage.getByRole('button', { name: 'Start session' }).click();
 
   // Wait until the chat screen is up (composer visible).
@@ -52,8 +75,8 @@ test('two-browser demo: host tags in guest, guest joins, host revokes/restores/k
 
   // ── 4. Guest opens the invite URL and joins as "Sam" ──────────────────────
   await guestPage.goto(inviteUrl);
-  await expect(guestPage.getByPlaceholder(/Your display name/)).toBeVisible();
-  await guestPage.getByPlaceholder(/Your display name/).fill('Sam');
+  await expect(guestPage.locator('#name-input')).toBeVisible();
+  await guestPage.locator('#name-input').fill('Sam');
   await guestPage.getByRole('button', { name: 'Join session' }).click();
   await expect(guestPage.locator('#composer')).toBeVisible({ timeout: 10000 });
 
@@ -115,7 +138,7 @@ test('two-browser demo: host tags in guest, guest joins, host revokes/restores/k
   await guestPage.reload();
   // Creds were cleared on kick, so the guest gate reappears.
   await expect(guestPage.getByRole('button', { name: 'Join session' })).toBeVisible({ timeout: 5000 });
-  await guestPage.getByPlaceholder(/Your display name/).fill('Sam');
+  await guestPage.locator('#name-input').fill('Sam');
   await guestPage.getByRole('button', { name: 'Join session' }).click();
 
   // Server rejects the single-use (burned) token → fatal screen persists.

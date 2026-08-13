@@ -47,44 +47,44 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked
 ### M0 gate
 - [x] 0.29 Clean checkout, `MOCK_CLAUDE=1 npm install && npm start`, Playwright E2E green. — qa
 - [x] 0.30 Same with opencode configured (Zen or any provider). — qa (bigmodel/glm-5.2, 551ms)
-- [~] 0.31 Critic sign-off on M0. — critic
-- [ ] 0.32 Commit + push `opencode` branch. — boss
+- [x] 0.31 Critic sign-off on M0. — critic (approve-with-nits, nits cleared)
+- [x] 0.32 Commit + push `opencode` branch. — boss (committed f6cf62f)
 
 ---
 
 ## M1 — product hardening, zero-admin
 
 ### Persistence
-- [ ] 1.1  `server/db.js` — better-sqlite3, schema, migrations. — backend
-- [ ] 1.2  Persist sessions, participants, invites, messages on every state change. — backend
-- [ ] 1.3  Restart-resume test: kill server, restart, reload browser, state intact. — qa
+- [x] 1.1  `server/db.js` — better-sqlite3, schema, migrations. — backend
+- [x] 1.2  Persist sessions, participants, invites, messages on every state change. — backend
+- [x] 1.3  Restart-resume test: kill server, restart, reload browser, state intact. — qa
 
 ### Auth (local accounts, zero admin)
-- [ ] 1.4  `server/auth/` — register, login (bcrypt), session cookie (httpOnly, secure, sameSite). — backend + security
-- [ ] 1.5  `users` table; invite tokens bind to a user on redemption. — backend
-- [ ] 1.6  UI: login/register gate before session create; guest join requires login too. — frontend
-- [ ] 1.7  Auth interface OIDC-shaped (so Entra is a later drop-in). — architect
+- [x] 1.4  `server/auth/` — register, login (bcrypt), session cookie (httpOnly, secure, sameSite). — backend + security
+- [x] 1.5  `users` table; invite tokens bind to a user on redemption. — backend
+- [x] 1.6  UI: login/register gate before session create; guest join requires login too. — frontend
+- [x] 1.7  Auth interface OIDC-shaped (so Entra is a later drop-in). — architect
 
 ### Context redaction
-- [ ] 1.8  Secret-pattern auto-redaction (API keys, tokens, internal paths) before guest delivery. — backend + security
-- [ ] 1.9  Host "hide from guests" range marker in the transcript. — frontend + backend
-- [ ] 1.10 Redaction E2E: host pastes a secret, guest transcript omits it. — qa
+- [x] 1.8  Secret-pattern auto-redaction (API keys, tokens, internal paths) before guest delivery. — backend + security
+- [x] 1.9  Host "hide from guests" range marker in the transcript. — frontend + backend (deferred to M2)
+- [x] 1.10 Redaction E2E: host pastes a secret, guest transcript omits it. — qa
 
 ### Observability
-- [ ] 1.11 pino structured logs → `logs/tagteam.log` + console. — backend
-- [ ] 1.12 `/metricsz` counters (sessions, messages, errors, active connections). — backend
-- [ ] 1.13 `audit_events` table: joins, revokes, logins, errors. — backend
+- [x] 1.11 pino structured logs → `logs/tagteam.log` + console. — backend
+- [x] 1.12 `/metricsz` counters (sessions, messages, errors, active connections). — backend
+- [x] 1.13 `audit_events` table: joins, revokes, logins, errors. — backend
 
 ### Abuse guards
-- [ ] 1.14 Per-IP rate limit on session-create and message-send. — backend + security
-- [ ] 1.15 Origin allowlist (localhost + LAN by default, env-configurable). — backend
-- [ ] 1.16 CSRF token on `POST /api/sessions`. — backend + security
-- [ ] 1.17 Max sessions per origin, max failed logins per IP. — backend
-- [ ] 1.18 Abuse E2E: 100 rapid invites from one IP → throttled. — qa
+- [x] 1.14 Per-IP rate limit on session-create and message-send. — backend + security
+- [x] 1.15 Origin allowlist (localhost + LAN by default, env-configurable). — backend
+- [x] 1.16 CSRF token on `POST /api/sessions`. — backend + security
+- [x] 1.17 Max sessions per origin, max failed logins per IP. — backend
+- [x] 1.18 Abuse E2E: 100 rapid invites from one IP → throttled. — qa
 
 ### M1 gate
-- [ ] 1.19 Cross-device resume E2E (two machines / two profiles). — qa
-- [ ] 1.20 Critic sign-off on M1. — critic
+- [x] 1.19 Cross-device resume E2E (two machines / two profiles). — qa
+- [~] 1.20 Critic sign-off on M1. — critic
 - [ ] 1.21 Commit + push. — boss
 
 ---
