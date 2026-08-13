@@ -1,0 +1,90 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "boss",
+  "subagent_depth": 4,
+  "logLevel": "INFO",
+  "instructions": [
+    "PLAN.md",
+    "docs/personas/boss.md"
+  ],
+  "tool_output": {
+    "max_lines": 3000,
+    "max_bytes": 512000
+  },
+  "compaction": {
+    "auto": true,
+    "tail_turns": 12,
+    "preserve_recent_tokens": 30000
+  },
+  "permission": {
+    "read": "allow",
+    "glob": "allow",
+    "grep": "allow",
+    "list": "allow",
+    "webfetch": "allow",
+    "websearch": "allow",
+    "task": "allow",
+    "todowrite": "allow",
+    "question": "allow",
+    "edit": "ask",
+    "bash": { "git *": "allow", "npm *": "allow", "node *": "allow", "npx *": "allow", "*": "ask" }
+  },
+  "agent": {
+    "boss": {
+      "model": "bigmodel/glm-5.2",
+      "mode": "primary",
+      "steps": 80,
+      "description": "Orchestrator for the TagTeam -> opencode rebuild. Holds PLAN.md, TASKS.md, DECISION_LOG.md. Dispatches specialists via Task, enforces the design->critique->build->integrate->QA->approve->merge loop, enforces the zero-admin/zero-budget deferral list. Does not write code.",
+      "permission": { "edit": "allow", "bash": { "git *": "allow", "*": "ask" }, "task": "allow" }
+    },
+    "architect": {
+      "model": "bigmodel/glm-5.2",
+      "mode": "subagent",
+      "steps": 30,
+      "description": "Designs the target architecture, opencode adapter contract, auth interface, redaction model. Owns docs/design/architecture.md and the implementation guides. Does not write code.",
+      "permission": { "edit": "allow", "bash": "deny", "task": "deny", "webfetch": "allow", "websearch": "allow" }
+    },
+    "backend": {
+      "model": "bigmodel/glm-5.2",
+      "mode": "subagent",
+      "steps": 60,
+      "description": "Implements server/ — opencode adapter, persistence (SQLite), local auth, redaction, observability, abuse guards. ESM, Node 20+, no build step, JSDoc types.",
+      "permission": { "edit": "allow", "bash": { "git *": "allow", "npm *": "allow", "node *": "allow", "npx *": "allow", "*": "ask" }, "task": "deny" }
+    },
+    "frontend": {
+      "model": "bigmodel/glm-5.2",
+      "mode": "subagent",
+      "steps": 40,
+      "description": "Implements web/ — de-Claude the UI, login/register, dashboard, a11y, mobile. Vanilla ESM, no framework, no build step.",
+      "permission": { "edit": "allow", "bash": { "npm *": "allow", "*": "ask" }, "task": "deny" }
+    },
+    "security": {
+      "model": "bigmodel/glm-5.2",
+      "mode": "subagent",
+      "steps": 25,
+      "description": "Threat model, tool allowlist, redaction patterns, auth policy, abuse guards. Owns docs/design/security.md. Reviews every guardrail before merge. Does not write code.",
+      "permission": { "edit": "allow", "bash": "deny", "task": "deny", "webfetch": "allow", "websearch": "allow" }
+    },
+    "qa": {
+      "model": "bigmodel/glm-5.2",
+      "mode": "subagent",
+      "steps": 50,
+      "description": "Vitest unit suite, Playwright E2E (two-browser), ESLint, tsc --noEmit, GitHub Actions CI. Owns test/ and .github/workflows/. E2E is the merge gate.",
+      "permission": { "edit": "allow", "bash": { "git *": "allow", "npm *": "allow", "npx *": "allow", "*": "ask" }, "task": "deny" }
+    },
+    "critic": {
+      "model": "bigmodel/glm-5.2",
+      "mode": "subagent",
+      "steps": 20,
+      "description": "Resident critic. Stress-tests every deliverable against PLAN.md and the architecture doc. Outputs BLOCKER/NIT lists. No code, no docs except docs/critique/*. Verdict: approve | approve-with-nits | block.",
+      "permission": { "edit": "deny", "bash": "deny", "task": "deny", "webfetch": "allow", "websearch": "allow" }
+    },
+    "integrator": {
+      "model": "bigmodel/glm-5.2",
+      "mode": "subagent",
+      "steps": 25,
+      "description": "Reconciles README, DEMO, PLAN, DECISION_LOG, TASKS, DEPLOY, ANNOUNCE. Keeps docs consistent with shipped code. No invented capabilities.",
+      "permission": { "edit": "allow", "bash": "deny", "task": "deny" }
+    }
+  }
+}
