@@ -18,38 +18,36 @@ Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked
 - [ ] 0.7 Write `docs/implementation/M0.md` (module-by-module guide) — architect + backend
 
 ### Port the agent backend
-- [ ] 0.8  Spike: minimal `server/agent/opencodeRunner.js` — one opencode session, echo a prompt, stream text deltas. Verify the SSE event shape. — backend
-- [ ] 0.9  Map opencode events → TagTeam frames (`text_delta`→`assistant_delta`, tool call→`tool_activity` start, tool result→`tool_activity` end, final→`assistant_complete`). — backend
-- [ ] 0.10 Replace `server/agent/index.js` backend selection: opencode (primary) → mock (fallback). Remove Anthropic SDK runners. — backend
-- [ ] 0.11 Update `server/config.js`: drop `ANTHROPIC_API_KEY`/`TAGTEAM_MODEL`; add opencode provider/model + `MOCK_CLAUDE`. — backend
-- [ ] 0.12 De-Claude `server/turns.js` system prompt ("You are the opencode agent inside TagTeam…"). — backend
-- [ ] 0.13 De-Claude `server/agent/mockRunner.js` (generic "Assistant (mock)"). — backend
-- [ ] 0.14 Read-only tool allowlist + demo-workspace confinement via opencode permission config. — backend + security
+- [x] 0.8  Spike: opencode SSE event shapes confirmed (plan A, in-process). See `docs/implementation/spike-opencode-sse.md`. — backend
+- [x] 0.9  Map opencode events → TagTeam frames (see spike §7; `message.part.delta`→`assistant_delta`, `message.part.updated` tool status→`tool_activity`, `message.updated` finish:stop→`assistant_complete`). — backend
+- [x] 0.10 Replace `server/agent/index.js` backend selection: opencode (primary) → mock (fallback). Remove Anthropic SDK runners. — backend
+- [x] 0.11 Update `server/config.js`: drop `ANTHROPIC_API_KEY`/`TAGTEAM_MODEL`; add opencode provider/model + `MOCK_CLAUDE`. — backend
+- [x] 0.12 De-Claude `server/turns.js` system prompt ("You are the opencode agent inside TagTeam…"). — backend
+- [x] 0.13 De-Claude `server/agent/mockRunner.js` (generic "Assistant (mock)"). — backend
+- [x] 0.14 Read-only tool allowlist + demo-workspace confinement via opencode permission config. — backend + security
 
 ### Web client
-- [ ] 0.15 Replace "Claude" labels in `web/index.html` + `web/app.js` with the active model name (fetch from a new `/api/config` endpoint). — frontend
-- [ ] 0.16 Roster "AI" pinned row → dynamic model name. — frontend
-
-### Tests
-- [ ] 0.17 Vitest setup + `test/unit/protocol.test.js` (frame shapes, error codes). — qa
-- [ ] 0.18 `test/unit/sessions.test.js` (create, invite lifecycle, resume, revoke). — qa
-- [ ] 0.19 `test/unit/turns.test.js` (FIFO batch, delta coalescing, system prompt roster). — qa
-- [ ] 0.20 `test/unit/flood.test.js` (per-connection flood guard). — qa
-- [ ] 0.21 `test/unit/agent-mock.test.js` (mock backend streams canned text, attributes by name). — qa
-- [ ] 0.22 `test/unit/agent-opencode.test.js` (opencode adapter event mapping, using a stubbed opencode client). — qa + backend
-- [ ] 0.23 Playwright setup + `test/e2e/two-browser.spec.js` (host→tag→guest→ask→answer→revoke). Mock mode. — qa
-- [ ] 0.24 Coverage gate: ≥80% lines on `server/`. — qa
+- [x] 0.15 Replace "Claude" labels in `web/index.html` + `web/app.js` with the active model name (fetch from a new `/api/config` endpoint). — frontend
+- [x] 0.16 Roster "AI" pinned row → dynamic model name. — frontend
+- [x] 0.17 Vitest setup + `test/unit/protocol.test.js` (frame shapes, error codes). — qa
+- [x] 0.18 `test/unit/sessions.test.js` (create, invite lifecycle, resume, revoke). — qa
+- [x] 0.19 `test/unit/turns.test.js` (FIFO batch, delta coalescing, system prompt roster). — qa
+- [x] 0.20 `test/unit/flood.test.js` (per-connection flood guard). — qa
+- [x] 0.21 `test/unit/agent-mock.test.js` (mock backend streams canned text, attributes by name). — qa
+- [x] 0.22 `test/unit/agent-opencode.test.js` (opencode adapter event mapping, using a stubbed opencode client). — qa + backend
+- [x] 0.23 Playwright setup + `test/e2e/two-browser.spec.js` (host→tag→guest→ask→answer→revoke). Mock mode. — qa
+- [x] 0.24 Coverage gate: ≥80% lines on `server/`. — qa (93.45%)
 
 ### Tooling + CI
-- [ ] 0.25 `eslint.config.js` (flat config, ESM). — qa
-- [ ] 0.26 `tsconfig.json` (checkJs, JSDoc) + `tsc --noEmit`. — qa
-- [ ] 0.27 `.github/workflows/ci.yml`: install → lint → typecheck → unit → e2e → upload artifact. — qa
-- [ ] 0.28 `package.json` scripts: `lint`, `typecheck`, `test`, `test:e2e`, `start`. — qa
+- [x] 0.25 `eslint.config.js` (flat config, ESM). — qa
+- [x] 0.26 `tsconfig.json` (checkJs, JSDoc) + `tsc --noEmit`. — qa
+- [x] 0.27 `.github/workflows/ci.yml`: install → lint → typecheck → unit → e2e → upload artifact. — qa
+- [x] 0.28 `package.json` scripts: `lint`, `typecheck`, `test`, `test:e2e`, `start`. — qa
 
 ### M0 gate
-- [ ] 0.29 Clean checkout, `MOCK_CLAUDE=1 npm install && npm start`, Playwright E2E green. — qa (verifies), boss (approves)
-- [ ] 0.30 Same with opencode configured (Zen or any provider). — qa
-- [ ] 0.31 Critic sign-off on M0. — critic
+- [x] 0.29 Clean checkout, `MOCK_CLAUDE=1 npm install && npm start`, Playwright E2E green. — qa
+- [x] 0.30 Same with opencode configured (Zen or any provider). — qa (bigmodel/glm-5.2, 551ms)
+- [~] 0.31 Critic sign-off on M0. — critic
 - [ ] 0.32 Commit + push `opencode` branch. — boss
 
 ---

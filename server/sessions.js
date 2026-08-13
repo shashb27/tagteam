@@ -9,11 +9,50 @@ import {
 } from './config.js';
 import { V, sendFrame } from './protocol.js';
 
-/** @type {Map<string, object>} sessionId -> Session */
+/** @type {Map<string, Session>} sessionId -> Session */
 export const sessions = new Map();
 
 /** Invite token -> sessionId (so a WS join can find the session by token). */
 export const inviteIndex = new Map();
+
+/**
+ * @typedef {Object} Participant
+ * @property {string} id
+ * @property {string} name
+ * @property {'host'|'guest'} role
+ * @property {boolean} canSend
+ * @property {'active'|'kicked'} status
+ * @property {boolean} connected
+ * @property {Set<any>} sockets
+ * @property {string} resumeKey
+ * @property {number} joinedAt
+ */
+
+/**
+ * @typedef {Object} Invite
+ * @property {string} token
+ * @property {number} createdAt
+ * @property {number} expiresAt
+ * @property {string|null} usedBy
+ * @property {boolean} revoked
+ */
+
+/**
+ * @typedef {Object} Session
+ * @property {string} id
+ * @property {string} hostKey
+ * @property {number} createdAt
+ * @property {number} lastActivityAt
+ * @property {string} baseUrl
+ * @property {Map<string, Participant>} participants
+ * @property {Map<string, Invite>} invites
+ * @property {any[]} transcript
+ * @property {number} nextSeq
+ * @property {any[]} pendingUserMessages
+ * @property {any|null} activeRun
+ * @property {any} agent
+ * @property {string[]} rosterNotes
+ */
 
 // ---------------------------------------------------------------------------
 // Creation
@@ -22,6 +61,10 @@ export function canCreateSession() {
   return sessions.size < MAX_SESSIONS;
 }
 
+/**
+ * @param {string} hostHeader
+ * @returns {Session}
+ */
 export function createSession(hostHeader) {
   const id = randomUUID();
   const session = {
@@ -48,10 +91,17 @@ export function createSession(hostHeader) {
   return session;
 }
 
+/**
+ * @param {string} id
+ * @returns {Session | undefined}
+ */
 export function getSession(id) {
   return sessions.get(id);
 }
 
+/**
+ * @param {Session} session
+ */
 export function touch(session) {
   session.lastActivityAt = Date.now();
 }
@@ -61,13 +111,13 @@ export function touch(session) {
 
 /**
  * Sanitize a display name: trim, strip control chars, strip square brackets
- * (so a name can never spoof the "[Name]:" attribution format Claude sees),
+ * (so a name can never spoof the "[Name]:" attribution format the assistant sees),
  * clamp to 40 chars. Returns null when invalid.
  */
 export function sanitizeName(raw) {
   if (typeof raw !== 'string') return null;
   // eslint-disable-next-line no-control-regex
-  let name = raw.replace(/[\u0000-\u001f\u007f]/g, '').replace(/[\[\]]/g, '').trim();
+  let name = raw.replace(/[\u0000-\u001f\u007f]/g, '').replace(/[[\]]/g, '').trim();
   if (name.length === 0) return null;
   if (name.length > 40) name = name.slice(0, 40).trim();
   return name.length > 0 ? name : null;
@@ -242,7 +292,7 @@ function anySocketConnected(session) {
 }
 
 export function destroySession(session, reason = 'expired') {
-  // Abort any in-flight Claude run.
+  // Abort any in-flight assistant run.
   if (session.activeRun?.abortController) {
     try { session.activeRun.abortController.abort(); } catch { /* */ }
   }

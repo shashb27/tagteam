@@ -11,6 +11,7 @@ import {
   MAX_MESSAGE_CHARS, FLOOD_WINDOW_MS, FLOOD_MAX_MSGS,
 } from './config.js';
 import { sendError, sendFrame, V } from './protocol.js';
+import { floodCheck } from './flood.js';
 import {
   canCreateSession, createSession, getSession, touch,
   sanitizeName, createParticipant, hostParticipant, checkInvite, createInvite,
@@ -102,6 +103,12 @@ function handleHttp(req, res) {
   if (req.method === 'GET' && pathname === '/healthz') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ ok: true, agentImpl: backendInfo().name }));
+    return;
+  }
+
+  if (req.method === 'GET' && pathname === '/api/config') {
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ modelName: backendInfo().assistantName }));
     return;
   }
 
@@ -269,13 +276,12 @@ function handleUserMessage(socket, frame) {
   // Per-connection flood guard (security design §9): sliding window.
   const state = socketState.get(socket);
   const now = Date.now();
-  state.floodTimestamps = state.floodTimestamps.filter((t) => now - t < FLOOD_WINDOW_MS);
-  if (state.floodTimestamps.length >= FLOOD_MAX_MSGS) {
+  const { limited } = floodCheck(state, now, FLOOD_WINDOW_MS, FLOOD_MAX_MSGS);
+  if (limited) {
     return sendError(socket, 'RATE_LIMITED', {
       clientMsgId, message: 'Slow down — too many messages in a short time.',
     });
   }
-  state.floodTimestamps.push(now);
 
   const message = appendMessage(session, {
     role: 'user',

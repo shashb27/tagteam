@@ -12,7 +12,7 @@
   <!-- Screen 1: name gate (host + guest variants, toggled by JS) -->
   <main id="gate" class="gate">
     <h1 class="logo">Tag<span class="logo-accent">Team</span></h1>
-    <p id="gate-title" class="gate-title">Start a shared Claude session</p>
+    <p id="gate-title" class="gate-title">Start a shared assistant session</p>
     <p id="gate-sub" class="gate-sub">Stop playing telephone with your AI.</p>
     <form id="gate-form" class="gate-form">
       <input id="name-input" type="text" maxlength="40" autocomplete="off"
@@ -54,7 +54,7 @@
 
     <form id="composer" class="composer">
       <textarea id="composer-input" rows="1" maxlength="8000"
-                placeholder="Message Claude &mdash; everyone in the session sees this."></textarea>
+                 placeholder="Message the assistant &mdash; everyone in the session sees this."></textarea>
       <button id="send-btn" type="submit">Send</button>
     </form>
   </div>
@@ -72,7 +72,7 @@
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <h3 id="modal-title">Tag in a colleague</h3>
       <p class="modal-body">They&rsquo;ll join this live conversation &mdash; full transcript,
-        direct line to Claude. Link is single-use and expires in 30 minutes.</p>
+        direct line to the assistant. Link is single-use and expires in 30 minutes.</p>
       <div class="invite-row">
         <input id="invite-url" readonly spellcheck="false">
         <button id="copy-btn" type="button">Copy link</button>
