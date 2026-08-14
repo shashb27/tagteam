@@ -1,10 +1,11 @@
-// Turn engine: one Claude run at a time per session, FIFO batching of user
+// Turn engine: one assistant run at a time per session, FIFO batching of user
 // messages, delta coalescing, and the §8.5 prompt/context assembly.
 
 import {
   DELTA_FLUSH_BYTES, DELTA_FLUSH_MS, RUN_TIMEOUT_MS, MAX_PENDING_MESSAGES,
 } from './config.js';
 import { appendMessage, broadcast, getSession, touch } from './sessions.js';
+import { noteError } from './observe.js';
 
 let backend = null;
 
@@ -15,7 +16,7 @@ export function setBackend(b) {
 export function backendInfo() {
   return backend
     ? { name: backend.name, assistantName: backend.assistantName }
-    : { name: 'none', assistantName: 'Claude' };
+    : { name: 'none', assistantName: 'Assistant' };
 }
 
 // ---------------------------------------------------------------------------
@@ -27,7 +28,7 @@ export function buildSystemPrompt(session) {
     .map((p) => `- ${p.name} (${p.role})`)
     .join('\n');
 
-  let prompt = `You are Claude inside TagTeam, a shared multiplayer session where several people
+  let prompt = `You are the opencode agent inside TagTeam, a shared multiplayer session where several people
 collaborate with you in one live conversation.
 
 People currently in the room:
@@ -116,18 +117,18 @@ export function enqueueUserMessage(session, message) {
 function friendlyError(err) {
   if (err?.userMessage) return err.userMessage;
   const status = err?.status;
-  if (status === 401 || status === 403) return 'Claude API key is invalid on the server.';
-  if (status === 429) return 'Claude is rate-limited; wait a moment and resend.';
+  if (status === 401 || status === 403) return 'The assistant API key is invalid on the server.';
+  if (status === 429) return 'The assistant is rate-limited; wait a moment and resend.';
   if (typeof status === 'number' && status >= 500) {
-    return 'Claude is temporarily overloaded; resend your message.';
+    return 'The assistant is temporarily overloaded; resend your message.';
   }
   if (err?.name === 'AbortError' || /abort/i.test(String(err?.message ?? ''))) {
-    return 'Claude took too long and was stopped.';
+    return 'The assistant took too long and was stopped.';
   }
   if (/connection|network|fetch failed/i.test(String(err?.message ?? ''))) {
-    return 'Connection to Claude dropped mid-answer.';
+    return 'Connection to the assistant dropped mid-answer.';
   }
-  return 'Claude request failed. Try again.';
+  return 'The assistant request failed. Try again.';
 }
 
 async function startRun(session) {
@@ -136,8 +137,8 @@ async function startRun(session) {
 
   const assistantMessage = appendMessage(session, {
     role: 'assistant',
-    authorId: 'claude',
-    authorName: backend?.assistantName ?? 'Claude',
+    authorId: 'assistant',
+    authorName: backend?.assistantName ?? 'Assistant',
     text: '',
     streaming: true,
     toolEvents: [],
@@ -218,7 +219,7 @@ async function startRun(session) {
     if (abortController.signal.aborted) {
       // Timeout path — treated as failure per §7.
       throw Object.assign(new Error('run timed out'), {
-        userMessage: 'Claude took too long and was stopped.',
+        userMessage: 'The assistant took too long and was stopped.',
       });
     }
 
@@ -233,6 +234,7 @@ async function startRun(session) {
     });
   } catch (err) {
     console.error(`[turns] run failed for session ${session.id}:`, err);
+    noteError();
     flushDeltas(session);
     assistantMessage.streaming = false;
     broadcast(session, {

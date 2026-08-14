@@ -5,14 +5,33 @@
   "description": "TagTeam - multiplayer Claude sessions (hackathon POC)",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
-    "start": "node server/index.js"
+    "start": "node server/index.js",
+    "test": "vitest run --coverage",
+    "test:unit": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:real": "playwright test --config=playwright.config.real.js --grep @real",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@anthropic-ai/claude-agent-sdk": "^0.3.0",
-    "@anthropic-ai/sdk": "^0.116.0",
+    "@opencode-ai/sdk": "^1.18.18",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
+    "pino": "^10.3.1",
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.2.0",
+    "@vitest/coverage-v8": "^4.1.10",
+    "autocannon": "^8.0.0",
+    "eslint": "^10.8.1",
+    "globals": "^17.11.0",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
   }
 }

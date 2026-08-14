@@ -1,0 +1,12 @@
+services:
+  tagteam:
+    build: .
+    container_name: tagteam
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data
+      - ./logs:/logs
+    env_file:
+      - .env
+    restart: unless-stopped

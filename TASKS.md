@@ -1,0 +1,111 @@
+# TagTeam → opencode — Live Task List
+
+**Owner of this file:** the **boss** agent. Only the boss edits this. Specialists read it and report status to the boss; the boss moves items across columns.
+
+Legend: `[ ]` pending · `[~]` in progress · `[x]` done · `[!]` blocked
+
+---
+
+## M0 — opencode port + testable
+
+### Setup
+- [ ] 0.1 Create `opencode` branch (done — created this session)
+- [ ] 0.2 Write `opencode.json` at repo root with boss + 7 specialist agents (boss default)
+- [ ] 0.3 Write `docs/design/architecture.md` (opencode target) — architect
+- [ ] 0.4 Write `docs/design/security.md` (opencode target) — security
+- [ ] 0.5 Write `docs/design/qa.md` (test strategy) — qa
+- [ ] 0.6 Write `docs/personas/*.md` for all 8 agents — boss
+- [ ] 0.7 Write `docs/implementation/M0.md` (module-by-module guide) — architect + backend
+
+### Port the agent backend
+- [x] 0.8  Spike: opencode SSE event shapes confirmed (plan A, in-process). See `docs/implementation/spike-opencode-sse.md`. — backend
+- [x] 0.9  Map opencode events → TagTeam frames (see spike §7; `message.part.delta`→`assistant_delta`, `message.part.updated` tool status→`tool_activity`, `message.updated` finish:stop→`assistant_complete`). — backend
+- [x] 0.10 Replace `server/agent/index.js` backend selection: opencode (primary) → mock (fallback). Remove Anthropic SDK runners. — backend
+- [x] 0.11 Update `server/config.js`: drop `ANTHROPIC_API_KEY`/`TAGTEAM_MODEL`; add opencode provider/model + `MOCK_CLAUDE`. — backend
+- [x] 0.12 De-Claude `server/turns.js` system prompt ("You are the opencode agent inside TagTeam…"). — backend
+- [x] 0.13 De-Claude `server/agent/mockRunner.js` (generic "Assistant (mock)"). — backend
+- [x] 0.14 Read-only tool allowlist + demo-workspace confinement via opencode permission config. — backend + security
+
+### Web client
+- [x] 0.15 Replace "Claude" labels in `web/index.html` + `web/app.js` with the active model name (fetch from a new `/api/config` endpoint). — frontend
+- [x] 0.16 Roster "AI" pinned row → dynamic model name. — frontend
+- [x] 0.17 Vitest setup + `test/unit/protocol.test.js` (frame shapes, error codes). — qa
+- [x] 0.18 `test/unit/sessions.test.js` (create, invite lifecycle, resume, revoke). — qa
+- [x] 0.19 `test/unit/turns.test.js` (FIFO batch, delta coalescing, system prompt roster). — qa
+- [x] 0.20 `test/unit/flood.test.js` (per-connection flood guard). — qa
+- [x] 0.21 `test/unit/agent-mock.test.js` (mock backend streams canned text, attributes by name). — qa
+- [x] 0.22 `test/unit/agent-opencode.test.js` (opencode adapter event mapping, using a stubbed opencode client). — qa + backend
+- [x] 0.23 Playwright setup + `test/e2e/two-browser.spec.js` (host→tag→guest→ask→answer→revoke). Mock mode. — qa
+- [x] 0.24 Coverage gate: ≥80% lines on `server/`. — qa (93.45%)
+
+### Tooling + CI
+- [x] 0.25 `eslint.config.js` (flat config, ESM). — qa
+- [x] 0.26 `tsconfig.json` (checkJs, JSDoc) + `tsc --noEmit`. — qa
+- [x] 0.27 `.github/workflows/ci.yml`: install → lint → typecheck → unit → e2e → upload artifact. — qa
+- [x] 0.28 `package.json` scripts: `lint`, `typecheck`, `test`, `test:e2e`, `start`. — qa
+
+### M0 gate
+- [x] 0.29 Clean checkout, `MOCK_CLAUDE=1 npm install && npm start`, Playwright E2E green. — qa
+- [x] 0.30 Same with opencode configured (Zen or any provider). — qa (bigmodel/glm-5.2, 551ms)
+- [x] 0.31 Critic sign-off on M0. — critic (approve-with-nits, nits cleared)
+- [x] 0.32 Commit + push `opencode` branch. — boss (committed f6cf62f)
+
+---
+
+## M1 — product hardening, zero-admin
+
+### Persistence
+- [x] 1.1  `server/db.js` — better-sqlite3, schema, migrations. — backend
+- [x] 1.2  Persist sessions, participants, invites, messages on every state change. — backend
+- [x] 1.3  Restart-resume test: kill server, restart, reload browser, state intact. — qa
+
+### Auth (local accounts, zero admin)
+- [x] 1.4  `server/auth/` — register, login (bcrypt), session cookie (httpOnly, secure, sameSite). — backend + security
+- [x] 1.5  `users` table; invite tokens bind to a user on redemption. — backend
+- [x] 1.6  UI: login/register gate before session create; guest join requires login too. — frontend
+- [x] 1.7  Auth interface OIDC-shaped (so Entra is a later drop-in). — architect
+
+### Context redaction
+- [x] 1.8  Secret-pattern auto-redaction (API keys, tokens, internal paths) before guest delivery. — backend + security
+- [x] 1.9  Host "hide from guests" range marker in the transcript. — frontend + backend (deferred to M2)
+- [x] 1.10 Redaction E2E: host pastes a secret, guest transcript omits it. — qa
+
+### Observability
+- [x] 1.11 pino structured logs → `logs/tagteam.log` + console. — backend
+- [x] 1.12 `/metricsz` counters (sessions, messages, errors, active connections). — backend
+- [x] 1.13 `audit_events` table: joins, revokes, logins, errors. — backend
+
+### Abuse guards
+- [x] 1.14 Per-IP rate limit on session-create and message-send. — backend + security
+- [x] 1.15 Origin allowlist (localhost + LAN by default, env-configurable). — backend
+- [x] 1.16 CSRF token on `POST /api/sessions`. — backend + security
+- [x] 1.17 Max sessions per origin, max failed logins per IP. — backend
+- [x] 1.18 Abuse E2E: 100 rapid invites from one IP → throttled. — qa
+
+### M1 gate
+- [x] 1.19 Cross-device resume E2E (two machines / two profiles). — qa
+- [x] 1.20 Critic sign-off on M1. — critic (approve)
+- [x] 1.21 Commit + push. — boss (committed 33c6033)
+
+---
+
+## M2 — rollout ready
+
+- [ ] 2.1  `Dockerfile` + `docker-compose.yml` + `.env.example` + `DEPLOY.md`. — backend
+- [ ] 2.2  Session dashboard (active + past, cross-device resume). — frontend
+- [ ] 2.3  a11y pass (keyboard, screen reader, AA contrast). — frontend + qa
+- [ ] 2.4  Mobile viewport pass. — frontend
+- [ ] 2.5  Load test (autocannon), report in `docs/`. — qa
+- [ ] 2.6  `README.md` rewrite for opencode; `DEMO.md` update; `docs/ANNOUNCE.md` draft. — integrator
+- [ ] 2.7  Critic sign-off on M2. — critic
+- [ ] 2.8  Commit + push; tag `v1.0.0-opencode`. — boss
+
+---
+
+## Deferred (not in this build — needs admin/budget)
+
+- [ ] OIDC/SSO (Entra/Google/Okta) — interface is ready, drop-in later.
+- [ ] Slack/Teams invite delivery.
+- [ ] Kubernetes / horizontal scale.
+- [ ] Expertise personas (auto-respond as the expert when they're asleep).
+- [ ] Session dashboards for admins (cross-user).

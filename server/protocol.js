@@ -27,14 +27,18 @@ export const ERROR_MESSAGES = {
   READ_ONLY: 'The host has made you read-only.',
   EMPTY_MESSAGE: 'Message text is empty.',
   MESSAGE_TOO_LONG: 'Message is too long (max 8000 characters).',
-  RATE_LIMITED: 'Too many messages queued. Wait for Claude to catch up.',
+  RATE_LIMITED: 'Too many messages queued. Wait for the assistant to catch up.',
   NOT_HOST: 'Only the host can do that.',
   PARTICIPANT_NOT_FOUND: 'No such participant in this session.',
   CANNOT_REVOKE_HOST: 'The host cannot be revoked.',
   INTERNAL: 'Internal server error.',
 };
 
-/** Build an `error` frame. */
+/**
+ * Build an `error` frame.
+ * @param {string} code
+ * @param {{ fatal?: boolean, message?: string, clientMsgId?: string }} [opts]
+ */
 export function errorFrame(code, { fatal = false, message, clientMsgId } = {}) {
   const frame = {
     type: 'error',
@@ -60,6 +64,9 @@ export function sendFrame(socket, frame) {
 /**
  * Send a non-fatal or fatal error frame. Fatal errors close the socket with
  * WS close code 4000 (auth/validation) per the wire protocol.
+ * @param {any} socket
+ * @param {string} code
+ * @param {{ fatal?: boolean, closeCode?: number, message?: string, clientMsgId?: string }} [opts]
  */
 export function sendError(socket, code, opts = {}) {
   sendFrame(socket, errorFrame(code, opts));

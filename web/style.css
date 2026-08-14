@@ -9,7 +9,7 @@
   --text: #e9ecf2;
   --dim: #9aa3b2;
   --faint: #6b7382;
-  --accent: #e0805a;          /* Claude terracotta */
+  --accent: #e0805a;          /* terracotta */
   --accent-soft: rgba(224, 128, 90, 0.09);
   --accent-border: rgba(224, 128, 90, 0.55);
   --green: #46c07a;
@@ -79,6 +79,70 @@ input, textarea { font: inherit; color: var(--text); }
 .gate-form button:disabled, .btn-primary:disabled { opacity: 0.55; cursor: default; }
 .gate-error { color: var(--red); margin: 4px 0 0; }
 .gate-note { color: var(--faint); font-size: 14px; max-width: 52ch; margin: 8px 0 0; }
+
+/* ---------- Auth gate (M1) ---------- */
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+  width: 280px;
+}
+.auth-form input {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  outline: none;
+}
+.auth-form input:focus { border-color: var(--accent-border); }
+.auth-form input[hidden] { display: none; }
+.auth-form button {
+  padding: 12px 20px;
+  background: var(--accent);
+  color: #17110d;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radius);
+  margin-top: 4px;
+}
+.auth-form button:disabled { opacity: 0.55; cursor: default; }
+.auth-hint { color: var(--faint); font-size: 13px; margin: 2px 0 0; text-align: left; }
+.auth-switch { color: var(--faint); font-size: 14px; margin: 14px 0 0; }
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font: inherit;
+  padding: 0 0 0 4px;
+  cursor: pointer;
+}
+.link-btn:hover { text-decoration: underline; }
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  color: var(--dim);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  font-size: 14px;
+}
+.btn-ghost:hover { color: var(--text); border-color: var(--border); }
+
+/* ---------- Redaction markers (M1) ---------- */
+
+.redacted {
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 0.92em;
+  font-style: italic;
+  background: var(--surface-2);
+  border: 1px dashed var(--border-soft);
+  border-radius: 4px;
+  padding: 0 4px;
+  white-space: nowrap;
+}
 .fatal-home {
   margin-top: 18px;
   color: var(--accent);
@@ -456,13 +520,137 @@ input, textarea { font: inherit; color: var(--text); }
 
 /* ---------- Narrow screens (demo is desktop; keep it usable) ---------- */
 
+.sidebar-toggle { display: none; }
+
 @media (max-width: 760px) {
-  .sidebar { display: none; }
-  #tagin-btn { padding: 10px 12px; font-size: 14px; }
+  .topbar { gap: 6px; padding: 0 10px; }
+  .logo-sm { font-size: 16px; }
+  .conn-text { display: none; }
+  #tagin-btn { padding: 7px 10px; font-size: 13px; }
+  #dashboard-btn { padding: 7px 10px; font-size: 13px; }
+  #logout-btn { padding: 7px 10px; font-size: 13px; }
+  .session-label { display: none; }
+  .sidebar-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    font-size: 18px;
+    line-height: 1;
+  }
+  .sidebar {
+    position: fixed;
+    top: 56px;
+    right: 0;
+    bottom: 0;
+    width: min(280px, 82vw);
+    transform: translateX(100%);
+    transition: transform 0.18s ease;
+    z-index: 30;
+    box-shadow: -8px 0 24px rgba(0,0,0,0.4);
+    border-left: 1px solid var(--border);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-backdrop {
+    position: fixed;
+    inset: 56px 0 0 0;
+    background: rgba(5,6,9,0.5);
+    z-index: 29;
+  }
+  .transcript { padding: 16px 14px 28px; }
+  .composer { padding: 10px 12px 12px; gap: 8px; }
+  .composer textarea { padding: 10px 12px; max-height: 140px; }
+  .composer button { padding: 10px 16px; }
+  .msg-body { font-size: 16px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .cursor { animation: none; }
   .toast { animation: none; }
   .pt.pulse { animation: none; }
+  .sidebar { transition: none; }
+}
+
+/* ---------- Dashboard (M2) ---------- */
+
+.dashboard {
+  min-height: 100vh;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 40px 24px 64px;
+}
+.dashboard-head { text-align: center; margin-bottom: 28px; }
+.dashboard-title { font-size: 26px; font-weight: 700; margin: 6px 0 4px; }
+.dashboard-sub { color: var(--dim); margin: 0; }
+.dashboard-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+.dashboard-list { display: flex; flex-direction: column; gap: 12px; }
+.dashboard-list[aria-busy="true"]::before {
+  content: "Loading sessions…";
+  color: var(--faint);
+  text-align: center;
+  padding: 24px;
+}
+.dashboard-empty { color: var(--faint); text-align: center; padding: 32px; }
+
+.session-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  align-items: center;
+}
+.session-card .sc-title {
+  font-weight: 700;
+  font-size: 17px;
+  font-family: var(--mono);
+  color: var(--text);
+}
+.session-card .sc-meta {
+  grid-column: 1;
+  color: var(--dim);
+  font-size: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+.session-card .sc-meta .sc-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green);
+  display: inline-block;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+.session-card.ended .sc-dot { background: var(--faint); }
+.session-card .sc-cta { grid-column: 2; grid-row: 1 / span 2; }
+.session-card .sc-transcript {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--border-soft);
+  margin-top: 6px;
+  padding-top: 10px;
+  color: var(--dim);
+  font-size: 14px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+.session-card .sc-transcript p { margin: 0 0 6px; }
+.session-card .sc-transcript .sc-t-author { font-weight: 700; color: var(--text); }
+.session-card .sc-transcript .sc-t-time { color: var(--faint); font-size: 12px; margin-left: 6px; }
+.session-card.ended .sc-resume { display: none; }
+
+@media (max-width: 760px) {
+  .dashboard { padding: 28px 14px 48px; }
+  .session-card { grid-template-columns: 1fr; }
+  .session-card .sc-cta { grid-column: 1; grid-row: auto; justify-self: stretch; }
+  .session-card .sc-cta button { width: 100%; }
 }

@@ -1,6 +1,6 @@
-// MOCK Claude provider — last-resort backend so the multiplayer demo always
-// runs with zero credentials. Streams a plausible canned response word by
-// word. Clearly labeled: the assistant is named "Claude (mock)" and every
+// MOCK backend — last-resort provider so the multiplayer demo always runs
+// with zero credentials. Streams a plausible canned response word by word.
+// Clearly labeled: the assistant is named "Assistant (mock)" and every
 // response starts with a "[mock ...]" marker in the transcript.
 
 const CANNED = [
@@ -25,7 +25,7 @@ class MockAgentSession {
     this.turn += 1;
     const greeting = name ? `${name}, here's my take. ` : '';
     const text =
-      `[mock response — no Claude credentials configured, streaming canned text] ` +
+      `[mock response — no opencode provider configured, streaming canned text] ` +
       `${greeting}${body}`;
 
     const words = text.split(/(\s+)/).filter((w) => w.length > 0);
@@ -50,7 +50,7 @@ class MockAgentSession {
 export function mockBackend() {
   return {
     name: 'mock',
-    assistantName: 'Claude (mock)',
+    assistantName: 'Assistant (mock)',
     hasTools: false,
     createAgentSession() {
       return new MockAgentSession();
